@@ -1,6 +1,7 @@
 
 add_library(common 
     src/networking/tcpclient.cpp
+    src/utils/bytebuffer.cpp
 )
 
 target_include_directories(common 

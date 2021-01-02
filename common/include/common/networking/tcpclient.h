@@ -1,15 +1,11 @@
 #pragma once
 #include <string>
+#include "common/networking/client.h"
 
-class TCPClient {
-
+class TCPClient : public Client {
 public:
-    TCPClient(unsigned int port, std::string addres);
     virtual ~TCPClient() = default;
-    virtual bool Connect() = 0;
+    virtual void Connect() = 0;
     virtual void Close() = 0;
-protected:
-    int fd_;
-    unsigned int port_;
-    std::string addres_;
+    virtual bool IsConnected() = 0;
 };
