@@ -4,7 +4,8 @@
 class Client {
 public:
     virtual ~Client() = default;
-    virtual void Send(ByteBuffer) = 0;
+    virtual void Send(const ByteBuffer &) = 0;
     virtual ByteBuffer Receive() = 0;
     virtual bool CanReceive() = 0;
+    virtual bool CanSend() = 0;
 };

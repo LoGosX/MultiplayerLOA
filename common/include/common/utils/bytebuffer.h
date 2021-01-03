@@ -8,6 +8,9 @@ class ByteBuffer {
     using Byte = char;
 public:
 
+    ByteBuffer() = default;
+    ByteBuffer(const std::string &);
+
     bool IsEmpty() const;
     void LoadFrom(Byte * source, int bytes_count);
     const Byte * GetBuffer() const;

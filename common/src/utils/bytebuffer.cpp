@@ -3,13 +3,17 @@
 #include "spdlog/spdlog.h"
 #include <iostream>
 
+ByteBuffer::ByteBuffer(const std::string & s) {
+    WriteString(s);
+}
+
 void ByteBuffer::LoadFrom(Byte * src, int bytes) {
     buffer_ = std::vector<Byte>(src, src + bytes);
     tail_ = 0;
 }
 
 const ByteBuffer::Byte * ByteBuffer::GetBuffer() const {
-    return buffer_.data();
+    return buffer_.data() + tail_;
 }
 
 int ByteBuffer::GetSize() const {

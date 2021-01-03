@@ -1,6 +1,7 @@
 set(SOURCE_FILES 
     src/main.cpp
-    src/networking/linuxtcpclient.cpp
+    src/networking/serverclient.cpp
+    src/networking/server.cpp
 )
 
 include_directories("include")

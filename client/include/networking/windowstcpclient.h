@@ -23,8 +23,9 @@ public:
     bool IsConnected() override;
 
     ByteBuffer Receive() override;
-    void Send(ByteBuffer) override;
+    void Send(const ByteBuffer &) override;
     bool CanReceive() override;
+    bool CanSend() override;
 
     void InitializeWinsock();
 

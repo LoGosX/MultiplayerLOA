@@ -11,10 +11,14 @@ bool WindowsTCPClient::IsConnected() {
     return connected_;
 }
 
-
 bool WindowsTCPClient::CanReceive() {
     spdlog::warn("WindowsTCPClient::CanReceive() not implemented yet");
-    return false;
+    return true;
+}
+
+bool WindowsTCPClient::CanSend() {
+    spdlog::warn("WindowsTCPClient::CanReceive() not implemented yet");
+    return true;
 }
 
 void WindowsTCPClient::InitializeWinsock() {
@@ -80,7 +84,7 @@ void WindowsTCPClient::Connect() {
     connected_ = true;
 }
 
-void WindowsTCPClient::Send(ByteBuffer buffer) {
+void WindowsTCPClient::Send(const ByteBuffer & buffer) {
     // Send an initial buffer
     int iResult = send( this->connect_socket_, (char *)buffer.GetBuffer(), buffer.GetSize(), 0 );
     if (iResult == SOCKET_ERROR) {
