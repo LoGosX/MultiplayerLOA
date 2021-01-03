@@ -2,13 +2,27 @@
 #include "spdlog/spdlog.h"
 #include "common/utils/bytebuffer.h"
 
+WindowsTCPClient::WindowsTCPClient(std::string addr, std::string port) :
+    address_(addr), port_(port) {
+        InitializeWinsock();
+    }
+
+bool WindowsTCPClient::IsConnected() {
+    return connected_;
+}
+
+
+bool WindowsTCPClient::CanReceive() {
+    spdlog::warn("WindowsTCPClient::CanReceive() not implemented yet");
+    return false;
+}
 
 void WindowsTCPClient::InitializeWinsock() {
     // Initialize Winsock
     WSADATA wsaData;
     int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
     if (iResult != 0) {
-        spdlog::error("WSAStartup failed with error: %d\n", iResult);
+        spdlog::error("WSAStartup failed with error: {}\n", iResult);
         connected_ = false;
         return;
     }
@@ -31,7 +45,7 @@ void WindowsTCPClient::Connect() {
     // Resolve the server address and port
     iResult = getaddrinfo(address_.c_str(), port_.c_str(), &hints, &result);
     if ( iResult != 0 ) {
-        spdlog::error("getaddrinfo failed with error: %d\n", iResult);
+        spdlog::error("getaddrinfo failed with error: {}\n", iResult);
         connected_ = false;
         return;
     }
@@ -43,7 +57,7 @@ void WindowsTCPClient::Connect() {
         this->connect_socket_ = socket(ptr->ai_family, ptr->ai_socktype, 
             ptr->ai_protocol);
         if (this->connect_socket_ == INVALID_SOCKET) {
-            spdlog::error("socket failed with error: %ld\n", WSAGetLastError());
+            spdlog::error("socket failed with error: {}\n", WSAGetLastError());
             connected_ = false;
             return;
         }
@@ -70,25 +84,27 @@ void WindowsTCPClient::Send(ByteBuffer buffer) {
     // Send an initial buffer
     int iResult = send( this->connect_socket_, (char *)buffer.GetBuffer(), buffer.GetSize(), 0 );
     if (iResult == SOCKET_ERROR) {
-        printf("send failed with error: %d\n", WSAGetLastError());
+        spdlog::error("send failed with error: {}\n", WSAGetLastError());
     }
-
-    printf("Bytes Sent: %ld\n", iResult);
+    spdlog::info("Bytes Sent: {}\n", iResult);
 }
 
 ByteBuffer WindowsTCPClient::Receive() {
     ByteBuffer buffer;
-    buffer.SetSize(0);
-    int iResult = recv(this->connect_socket_, (char*)buffer.GetBuffer(), buffer.kSize, 0);
+    char * buf = new char[1024];
+    int iResult = recv(this->connect_socket_, buf, 1024, 0);
+    buffer.LoadFrom(buf, iResult);
     if ( iResult > 0 ){
-        spdlog::info("Bytes received: %d\n", iResult);
-        buffer.SetSize(iResult);
+        spdlog::info("Bytes received: {}\n", iResult);
+        buffer.LoadFrom(buf, iResult);
+        spdlog::info("Received: {}\n", buffer.ReadString());
     }
     else if ( iResult == 0 ){
         spdlog::error("Connection closed in receive\n");
     }
     else
-        spdlog::error("recv failed with error: %d\n", WSAGetLastError());
+        spdlog::error("recv failed with error: {}\n", WSAGetLastError());
+    delete buf;
     return buffer;
 }
 
@@ -96,7 +112,7 @@ void WindowsTCPClient::Close() {
     // shutdown the connection since no more data will be sent
     int iResult = shutdown(this->connect_socket_, SD_SEND);
     if (iResult == SOCKET_ERROR) {
-        spdlog::error("shutdown failed with error: %d\n", WSAGetLastError());
+        spdlog::error("shutdown failed with error: {}\n", WSAGetLastError());
     }
     // cleanup
     closesocket(this->connect_socket_);

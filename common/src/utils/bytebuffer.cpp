@@ -1,38 +1,67 @@
 #include <memory>
 #include "utils/bytebuffer.h"
+#include "spdlog/spdlog.h"
+#include <iostream>
 
-ByteBuffer::ByteBuffer(unsigned int size) : kSize(size) {
-    buffer_ = new uint8_t[size];
-}
-
-ByteBuffer::~ByteBuffer() {
-    delete buffer_;
-}
-
-ByteBuffer::ByteBuffer(const ByteBuffer & copy) : kSize(copy.kSize) {
-    head_ = copy.head_;
-    buffer_ = new uint8_t[kSize];
-    memcpy(buffer_, copy.buffer_, kSize);
-}
-
-void ByteBuffer::LoadFrom(uint8_t * src, int bytes) {
-    head_ = bytes;
-    memcpy(buffer_, src, bytes);
-}
-
-uint8_t * ByteBuffer::GetBuffer() const {
-    return buffer_;
-}
-
-int ByteBuffer::GetSize() const {
-    return head_ - tail_;
-}
-
-void ByteBuffer::SetSize(int s) {
-    head_ = s;
+void ByteBuffer::LoadFrom(Byte * src, int bytes) {
+    buffer_ = std::vector<Byte>(src, src + bytes);
     tail_ = 0;
 }
 
+const ByteBuffer::Byte * ByteBuffer::GetBuffer() const {
+    return buffer_.data();
+}
+
+int ByteBuffer::GetSize() const {
+    return buffer_.size() - tail_;
+}
+
 bool ByteBuffer::IsEmpty() const {
-    return head_ == tail_;
+    return buffer_.size() == tail_;
+}
+
+void ByteBuffer::WriteByte(Byte byte) {
+    buffer_.push_back(byte);
+}
+
+void ByteBuffer::WriteChar(char chr) {
+    WriteByte(static_cast<Byte>(chr));
+}
+
+void ByteBuffer::WriteString(const std::string & s) {
+    for(char chr : s)
+        WriteChar(chr);
+}
+
+ByteBuffer::Byte ByteBuffer::ReadByte() {
+    if(IsEmpty()) {
+        spdlog::error("Trying to read from empty buffer!");
+        return 0;
+    }else {
+        return buffer_[tail_++];
+    }
+}
+
+char ByteBuffer::ReadChar() {
+    return static_cast<char>(ReadByte());
+}
+
+std::string ByteBuffer::ReadString(int n_chars) {
+    std::string result;
+    for(int i = 0, size = GetSize(); i < size && (i < n_chars || n_chars == -1); i++) {
+        result += ReadChar();
+    }
+    return result;
+}
+
+std::string ByteBuffer::ReadStringUntil(char terminal) {
+    std::string result;
+    for(int i = 0; i < GetSize(); i++) {
+        auto chr = ReadChar();
+        if(chr == terminal){
+            break;
+        }
+        result += chr;
+    }
+    return result;
 }

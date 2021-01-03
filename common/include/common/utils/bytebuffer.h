@@ -1,22 +1,28 @@
 #pragma once
 #include <cstdint>
+#include <string>
+#include <vector>
 
 class ByteBuffer {
+    //using Byte = uint8_t;
+    using Byte = char;
 public:
-    ByteBuffer(unsigned int size=1024);
-    ~ByteBuffer();
-    bool IsEmpty() const;
-    const unsigned int kSize;
-    void LoadFrom(uint8_t * source, int bytes_count);
-    uint8_t * GetBuffer() const;
-    int GetSize() const;
-    void SetSize(int);
 
-    ByteBuffer(const ByteBuffer &);
-    ByteBuffer(ByteBuffer &&) = default;
+    bool IsEmpty() const;
+    void LoadFrom(Byte * source, int bytes_count);
+    const Byte * GetBuffer() const;
+    int GetSize() const;
+
+    void WriteByte(Byte);
+    void WriteChar(char);
+    void WriteString(const std::string&);
+
+    Byte ReadByte();
+    char ReadChar();
+    std::string ReadString(int n_chars = -1);
+    std::string ReadStringUntil(char terminal);
 
 private:
-    int head_ = 0;
     int tail_ = 0;
-    uint8_t * buffer_ = nullptr;
+    std::vector<Byte> buffer_;
 };

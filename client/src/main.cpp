@@ -3,11 +3,16 @@
 #include "common/game/color.h"
 #include "spdlog/spdlog.h"
 
+#include "networking/windowstcpclient.h"
+
 int main(int argc, char const *argv[])
 {
-    std::cout << "Hello World" << std::endl;
-    Color c = Color::kBlack;
-    std::cout << static_cast<int>(c) << std::endl;
-    spdlog::info("Welcome to spdlog from client!");
+    TCPClient * client = new WindowsTCPClient("127.0.0.1", "1234");
+    client->Connect();
+    ByteBuffer buffer;
+    buffer.WriteString("inf141210");
+    client->Send(buffer);
+    buffer = client->Receive();
+    std::cout << "Got " << buffer.ReadString();
     return 0;
 }
