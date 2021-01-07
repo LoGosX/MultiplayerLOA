@@ -1,4 +1,5 @@
 #include "networking/server.h"
+#include "common/networking/message.h"
 
 #include "spdlog/spdlog.h"
 
@@ -95,11 +96,15 @@ void Server::Update() {
                 cfds_to_delete.push_back(cfd);
                 continue;
             }
-            spdlog::info("Got {} from cfd={}\n", buffer.ReadString(), cfd); 
+            Message message(buffer);
+            spdlog::info("Got {} from cfd={}\n", message.ToString(), cfd); 
         }
         if(client->CanSend()) {
             spdlog::info("Sending message to {}\n", cfd);
-            client->Send(ByteBuffer("Hello from server\n"));
+            Message message;
+            message.type = Type::kMessage;
+            message.message = "Hello from server";
+            client->Send(message.ToByteBuffer());
         }
     }
     for(auto cfd : cfds_to_delete)
