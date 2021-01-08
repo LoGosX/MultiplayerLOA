@@ -15,11 +15,14 @@ int main(int argc, char const *argv[])
     while(!client->IsConnected())
     client->Connect();
     Message message;
-    message.type = Type::kSendingName;
-    message.name = "inf141210";
+    message.type = Type::kSearchingForGame;
+    message.name = "white";
+    message.opponentName = "black";
     client->Send(message.ToByteBuffer());
     ByteBuffer buffer = client->Receive();
+    std::cout << "ByteBuffer size: " << buffer.GetSize();
     message.FromByteBuffer(buffer);
-    std::cout << message.ToString() << std::endl;
+    std::cout << "Got: " << message.ToString() << std::endl;
+    client->Close();
     return 0;
 }

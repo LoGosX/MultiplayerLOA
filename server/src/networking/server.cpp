@@ -11,7 +11,7 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-
+#include <unistd.h> //sleep
 
 void Server::Prepare() {
     socklen_t slt;
@@ -84,37 +84,42 @@ void Server::Update() {
             }
         }
     }
-
     std::vector<int> cfds_to_delete;
     for(auto & [cfd, client] : clients_) {
         spdlog::info("cfd={} can_receive={} can_send={}\n", cfd, client->CanReceive(), client->CanSend());
         if(client->CanReceive()) {
-            spdlog::info("Waiting for message from {}\n", cfd);
-            ByteBuffer buffer = client->Receive();
-            spdlog::info("Buffer.size() = {}", buffer.GetSize());
-            if(buffer.IsEmpty()){
-                cfds_to_delete.push_back(cfd);
-                continue;
-            }
-            Message message(buffer);
-            spdlog::info("Got {} from cfd={}\n", message.ToString(), cfd); 
-        }
-        if(client->CanSend()) {
-            spdlog::info("Sending message to {}\n", cfd);
-            Message message;
-            message.type = Type::kMessage;
-            message.message = "Hello from server";
-            client->Send(message.ToByteBuffer());
+            ParseMessage(client.get());
         }
     }
-    for(auto cfd : cfds_to_delete)
-        RemoveClient(cfd);
+
+    DeleteClients();
+
+    sleep(1);
 }
 
-void Server::RemoveClient(int cfd) {
-    clients_.erase(cfd);
-    close(cfd);
-    FD_CLR(cfd, &rmask_);
-    FD_CLR(cfd, &wmask_);
+void Server::ParseMessage(ServerClient * client) {
+    ByteBuffer buffer = client->Receive();
+    if(buffer.IsEmpty()) {
+        spdlog::info("{} disconnected", client->GetFd());
+        MarkClientToDelete(client->GetFd());
+    }else {
+        Message message(buffer);
+        spdlog::info("Got {} \n", message.ToString());
+
+    }
+}
+
+void Server::MarkClientToDelete(int c) {
+    clients_to_delete_.push_back(c);
+} 
+
+void Server::DeleteClients() {
+    for(int cfd : clients_to_delete_) {
+        clients_.erase(cfd);
+        close(cfd);
+        FD_CLR(cfd, &rmask_);
+        FD_CLR(cfd, &wmask_);
+    }
     UpdateFDMax();
+    clients_to_delete_.resize(0);
 }

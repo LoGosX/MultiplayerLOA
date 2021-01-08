@@ -48,3 +48,7 @@ bool ServerClient::CanReceive() {
 bool ServerClient::CanSend() {
     return can_send_;
 }
+
+int ServerClient::GetFd() const {
+    return fd_;
+}

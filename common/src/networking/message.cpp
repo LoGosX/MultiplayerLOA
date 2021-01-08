@@ -20,7 +20,9 @@ ByteBuffer Message::ToByteBuffer() const {
         buffer.WriteByte(move.GetDestination().column);
     }else if(type == Type::kMessage) {
         buffer.WriteString(message);
-    }else {
+    }else if(type == Type::kSearchingForGame){
+        buffer.WriteString(name + '\n' + opponentName);
+    }else{
         spdlog::error("Unknown message Type!\n");
     }
     return buffer;
@@ -57,13 +59,24 @@ void Message::FromByteBuffer(ByteBuffer & buffer) {
             for(int c = 0; c < boardSize; c++)
                 board[r][c] = static_cast<Color>(buffer.ReadByte());
         }
-    } else {
-        spdlog::error("Unknown message type when reading!\n");
+    } else if(t == Type::kSearchingForGame){
+        auto names = SplitString(buffer.ReadString());
+        if(names.size() != 2) {
+            spdlog::error("Wrong number of received names! Got {} instead of 2", names.size());
+        }else{
+            name = names[0];
+            opponentName = names[1];
+        }
     }
+    else{
+        spdlog::error("Unknown message type when reading!\n");
+        return;
+    }
+    type = t;
 }
 
 std::string Message::ToString() const {
-    std::string result = std::to_string(static_cast<int>(type)) + ' ';
+    std::string result = std::to_string(static_cast<int>(type)) + "-> ";
     if(type == Type::kSendingName) {
         result += "NAME: " + name;
     }else if(type == Type::kRequestListOfPlayers) {
@@ -79,8 +92,10 @@ std::string Message::ToString() const {
         result += "MESSAGE: " + message;
     }else if(type == Type::kBoard) {
         result += "BOARD SIZE: " + std::to_string(boardSize);
-    }else {
-        spdlog::error("UNKNOWN MESSAGE TYPE");
+    }else if(type == Type::kSearchingForGame){
+        result += name + " wants to play against " + opponentName;
+    }else{
+        spdlog::error("UNKNOWN MESSAGE TYPE {}", static_cast<int>(type));
     }
     return result;
 }

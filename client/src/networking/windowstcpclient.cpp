@@ -95,20 +95,17 @@ void WindowsTCPClient::Send(const ByteBuffer & buffer) {
 
 ByteBuffer WindowsTCPClient::Receive() {
     ByteBuffer buffer;
-    char * buf = new char[1024];
+    char buf[1024];
     int iResult = recv(this->connect_socket_, buf, 1024, 0);
     buffer.LoadFrom(buf, iResult);
     if ( iResult > 0 ){
-        spdlog::info("Bytes received: {}\n", iResult);
         buffer.LoadFrom(buf, iResult);
-        spdlog::info("Received: {}\n", buffer.ReadString());
     }
     else if ( iResult == 0 ){
         spdlog::error("Connection closed in receive\n");
     }
     else
         spdlog::error("recv failed with error: {}\n", WSAGetLastError());
-    delete buf;
     return buffer;
 }
 

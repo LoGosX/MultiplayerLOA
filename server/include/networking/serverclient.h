@@ -13,6 +13,8 @@ public:
 
     void SetCanReceive(bool);
     void SetCanSend(bool);
+
+    int GetFd() const;
 private:
     int fd_;
     bool can_receive_ = false;

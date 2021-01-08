@@ -9,7 +9,8 @@ enum class Type : char {
     kRequestListOfPlayers = 1, //nothing is set
     kGameMove = 2, //only move is set
     kMessage = 3, //only message is set
-    kBoard = 4 //boardSize & board
+    kBoard = 4, //boardSize & board,
+    kSearchingForGame = 5 //name & opponentName
 };
 
 struct Message {
@@ -19,6 +20,7 @@ struct Message {
 
     Type type;
     std::string name;
+    std::string opponentName;
     std::vector<std::string> names;
     Move move;
     std::string message;
