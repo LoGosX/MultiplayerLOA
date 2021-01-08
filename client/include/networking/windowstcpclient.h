@@ -1,6 +1,8 @@
 #pragma once
 #include "common/networking/tcpclient.h"
 
+#include <atomic>
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
@@ -30,8 +32,13 @@ public:
     void InitializeWinsock();
 
 private:
-    bool connected_ = false;
+    void WaitForIncomingMessage();
+    void StartThreads();
+    std::atomic<bool> connected_ = false;
     std::string address_;
     std::string port_;
     SOCKET connect_socket_;
+    std::atomic<bool> can_receive_ = false;
+    std::atomic<bool> thread_should_run_ = false;
+    ByteBuffer last_received_buffer_;
 };

@@ -6,11 +6,8 @@ class Board;
 
 class Player {
 public:
-    virtual Color GetColor() const = 0;
-    virtual Move GetMove() = 0;
-    virtual void Think(Board * board) = 0;
-    bool IsReady() const;
-    void SetReady(bool);
-private:
-    bool ready_;
+    Color GetColor() const;
+    Move GetMove() const;
+    void Think(Board * board);
+    bool IsReady();
 };

@@ -2,18 +2,27 @@
 #include "spdlog/spdlog.h"
 #include "common/utils/bytebuffer.h"
 
+#include <thread>
+
 WindowsTCPClient::WindowsTCPClient(std::string addr, std::string port) :
     address_(addr), port_(port) {
         InitializeWinsock();
+
+        StartThreads();
     }
+
+void WindowsTCPClient::StartThreads() {
+    thread_should_run_ = true;
+    std::thread thread(&WindowsTCPClient::WaitForIncomingMessage, this);
+    thread.detach();
+}
 
 bool WindowsTCPClient::IsConnected() {
     return connected_;
 }
 
 bool WindowsTCPClient::CanReceive() {
-    spdlog::warn("WindowsTCPClient::CanReceive() not implemented yet");
-    return true;
+    return can_receive_;
 }
 
 bool WindowsTCPClient::CanSend() {
@@ -94,22 +103,9 @@ void WindowsTCPClient::Send(const ByteBuffer & buffer) {
 }
 
 ByteBuffer WindowsTCPClient::Receive() {
-    ByteBuffer buffer;
-    char * buf = new char[1024];
-    int iResult = recv(this->connect_socket_, buf, 1024, 0);
-    buffer.LoadFrom(buf, iResult);
-    if ( iResult > 0 ){
-        spdlog::info("Bytes received: {}\n", iResult);
-        buffer.LoadFrom(buf, iResult);
-        spdlog::info("Received: {}\n", buffer.ReadString());
-    }
-    else if ( iResult == 0 ){
-        spdlog::error("Connection closed in receive\n");
-    }
-    else
-        spdlog::error("recv failed with error: {}\n", WSAGetLastError());
-    delete buf;
-    return buffer;
+    spdlog::info("Got {} bytes", last_received_buffer_.GetSize());
+    can_receive_ = false;
+    return last_received_buffer_;
 }
 
 void WindowsTCPClient::Close() {
@@ -121,4 +117,25 @@ void WindowsTCPClient::Close() {
     // cleanup
     closesocket(this->connect_socket_);
     WSACleanup();
+}
+
+
+void WindowsTCPClient::WaitForIncomingMessage() {
+    can_receive_ = false;
+    char buf[1024];
+    while(thread_should_run_){
+        if(!IsConnected())
+            continue;
+        int iResult = recv(this->connect_socket_, buf, 1024, 0);
+        can_receive_ = false;
+        if ( iResult > 0 ){
+            last_received_buffer_.LoadFrom(buf, iResult);
+            can_receive_ = true;
+        }
+        else if ( iResult == 0 ){
+            spdlog::error("Connection closed in receive\n");
+        }
+        else
+            spdlog::error("recv failed with error: {}\n", WSAGetLastError());
+    }
 }

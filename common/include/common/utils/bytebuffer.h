@@ -25,6 +25,7 @@ public:
     std::string ReadString(int n_chars = -1);
     std::string ReadStringUntil(char terminal);
 
+    std::string ToString() const;
 private:
     int tail_ = 0;
     std::vector<Byte> buffer_;

@@ -1,5 +1,6 @@
 #include "networking/server.h"
 #include "common/networking/message.h"
+#include "game/serverboard.h"
 
 #include "spdlog/spdlog.h"
 
@@ -11,7 +12,7 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-
+#include <unistd.h> //sleep
 
 void Server::Prepare() {
     socklen_t slt;
@@ -62,14 +63,15 @@ void Server::Update() {
         spdlog::info("New connection: {}\n", inet_ntoa((in_addr)caddr.sin_addr));
         FD_SET(cfd, &rmask_);
         FD_SET(cfd, &wmask_);
-        clients_[cfd] = std::make_unique<ServerClient>(cfd);
+        clients_.emplace_back(std::make_unique<ServerClient>(cfd));
         if (cfd > fdmax_)
             fdmax_ = cfd;
     }
     else
     {
-        for(auto & [cfd, client] : clients_)
+        for(auto & client : clients_)
         {
+            int cfd = client->GetFd();
             if (FD_ISSET(cfd, &rmask_tmp))
             {
                 client->SetCanReceive(true);
@@ -84,37 +86,35 @@ void Server::Update() {
             }
         }
     }
+    
+    //spdlog::info("TryToStartGame()\n");
+    TryToStartGame();
 
-    std::vector<int> cfds_to_delete;
-    for(auto & [cfd, client] : clients_) {
-        spdlog::info("cfd={} can_receive={} can_send={}\n", cfd, client->CanReceive(), client->CanSend());
-        if(client->CanReceive()) {
-            spdlog::info("Waiting for message from {}\n", cfd);
-            ByteBuffer buffer = client->Receive();
-            spdlog::info("Buffer.size() = {}", buffer.GetSize());
-            if(buffer.IsEmpty()){
-                cfds_to_delete.push_back(cfd);
-                continue;
-            }
-            Message message(buffer);
-            spdlog::info("Got {} from cfd={}\n", message.ToString(), cfd); 
-        }
-        if(client->CanSend()) {
-            spdlog::info("Sending message to {}\n", cfd);
-            Message message;
-            message.type = Type::kMessage;
-            message.message = "Hello from server";
-            client->Send(message.ToByteBuffer());
-        }
+    //spdlog::info("Updating games\n");
+    for(auto & game : games_){
+        game->Update();
     }
-    for(auto cfd : cfds_to_delete)
-        RemoveClient(cfd);
+
+    DeleteClients();
+
+    sleep(1);
 }
 
-void Server::RemoveClient(int cfd) {
-    clients_.erase(cfd);
-    close(cfd);
-    FD_CLR(cfd, &rmask_);
-    FD_CLR(cfd, &wmask_);
+void Server::DeleteClients() {
+    //todo delete clients
     UpdateFDMax();
+    clients_to_delete_.resize(0);
+}
+
+void Server::TryToStartGame() {
+    if(clients_.size() == 2 && games_.size() == 0) {
+        spdlog::info("???\n");
+        spdlog::info("{} {}\n", clients_.size(), games_.size());
+        spdlog::info("Starting new game for cfds {} and {}", clients_[0]->GetFd(), clients_[1]->GetFd());
+        spdlog::info("??? 2\n");
+        games_.emplace_back(
+            std::make_unique<Game>(clients_[0].get(), clients_[1].get(), new ServerBoard())
+        );
+        spdlog::info("??? 3\n");
+    }
 }
