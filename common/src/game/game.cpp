@@ -22,15 +22,12 @@ void Game::SwitchPlayers() {
 
 bool Game::Update() {
     Player * current_player = GetCurrentPlayer();
+    current_player->Think(board_);
     if(current_player->IsReady()) {
         Move move = current_player->GetMove();
-
         board_->DoMove(move);
-
-        current_player->SetReady(false);
         SwitchPlayers();
         current_player = GetCurrentPlayer();
-        current_player->Think(board_);
         turn_count_++;
         return true;
     }

@@ -2,6 +2,8 @@
 #include "spdlog/spdlog.h"
 #include "common/utils/bytebuffer.h"
 
+#include <thread>
+
 WindowsTCPClient::WindowsTCPClient(std::string addr, std::string port) :
     address_(addr), port_(port) {
         InitializeWinsock();
@@ -12,8 +14,7 @@ bool WindowsTCPClient::IsConnected() {
 }
 
 bool WindowsTCPClient::CanReceive() {
-    spdlog::warn("WindowsTCPClient::CanReceive() not implemented yet");
-    return true;
+    return can_receive_;
 }
 
 bool WindowsTCPClient::CanSend() {
@@ -94,19 +95,7 @@ void WindowsTCPClient::Send(const ByteBuffer & buffer) {
 }
 
 ByteBuffer WindowsTCPClient::Receive() {
-    ByteBuffer buffer;
-    char buf[1024];
-    int iResult = recv(this->connect_socket_, buf, 1024, 0);
-    buffer.LoadFrom(buf, iResult);
-    if ( iResult > 0 ){
-        buffer.LoadFrom(buf, iResult);
-    }
-    else if ( iResult == 0 ){
-        spdlog::error("Connection closed in receive\n");
-    }
-    else
-        spdlog::error("recv failed with error: {}\n", WSAGetLastError());
-    return buffer;
+    return last_received_buffer_;
 }
 
 void WindowsTCPClient::Close() {
@@ -118,4 +107,23 @@ void WindowsTCPClient::Close() {
     // cleanup
     closesocket(this->connect_socket_);
     WSACleanup();
+}
+
+
+void WindowsTCPClient::WaitForIncomingMessage() {
+    can_receive_ = false;
+    char buf[1024];
+    while(thread_should_run_){
+        int iResult = recv(this->connect_socket_, buf, 1024, 0);
+        can_receive_ = false;
+        if ( iResult > 0 ){
+            last_received_buffer_.LoadFrom(buf, iResult);
+            can_receive_ = true;
+        }
+        else if ( iResult == 0 ){
+            spdlog::error("Connection closed in receive\n");
+        }
+        else
+            spdlog::error("recv failed with error: {}\n", WSAGetLastError());
+    }
 }

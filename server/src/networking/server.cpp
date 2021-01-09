@@ -1,5 +1,6 @@
 #include "networking/server.h"
 #include "common/networking/message.h"
+#include "game/serverboard.h"
 
 #include "spdlog/spdlog.h"
 
@@ -84,7 +85,6 @@ void Server::Update() {
             }
         }
     }
-    std::vector<int> cfds_to_delete;
     for(auto & [cfd, client] : clients_) {
         spdlog::info("cfd={} can_receive={} can_send={}\n", cfd, client->CanReceive(), client->CanSend());
         if(client->CanReceive()) {
@@ -105,7 +105,13 @@ void Server::ParseMessage(ServerClient * client) {
     }else {
         Message message(buffer);
         spdlog::info("Got {} \n", message.ToString());
-
+        if(message.type == Type::kSearchingForGame) {
+            clients_looking_for_game_.push_back({
+                {client, message.name, message.opponentName}
+            });
+        }else {
+            spdlog::warn("{} parse not handled yet", static_cast<int>(message.type));
+        }
     }
 }
 
@@ -122,4 +128,20 @@ void Server::DeleteClients() {
     }
     UpdateFDMax();
     clients_to_delete_.resize(0);
+}
+
+void Server::TryToStartGame() {
+    std::vector<int> ids_game_started;
+    for(int i = 0; i < clients_looking_for_game_.size(); i++) {
+        for(int j = i + 1; j < clients_looking_for_game_.size(); j++) {
+            auto info1 = clients_looking_for_game_[i];
+            auto info2 = clients_looking_for_game_[j];
+            if(info1.who == info2.targetName && info2.who == info1.targetName) {
+                ids_game_started.push_back(i);
+                ids_game_started.push_back(j);
+                ServerBoard * board = new ServerBoard()
+                Game * game = new Game() 
+            }
+        }
+    }
 }

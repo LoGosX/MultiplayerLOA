@@ -10,7 +10,8 @@ enum class Type : char {
     kGameMove = 2, //only move is set
     kMessage = 3, //only message is set
     kBoard = 4, //boardSize & board,
-    kSearchingForGame = 5 //name & opponentName
+    kSearchingForGame = 5, //name & opponentName
+    kGameStart = 6 //gameAccepted & board & yourColor & yourTurn & avaliableMoves (if yourTurn)
 };
 
 struct Message {
@@ -25,6 +26,10 @@ struct Message {
     Move move;
     std::string message;
     int boardSize;
+    bool gameAccepted;
+    Color yourColor;
+    bool yourTurn;
+    std::vector<Move> avaliableMoves;
     std::vector<std::vector<Color>> board;
     ByteBuffer ToByteBuffer() const;
     void FromByteBuffer(ByteBuffer & buffer);

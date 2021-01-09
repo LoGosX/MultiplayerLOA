@@ -6,6 +6,27 @@ Message::Message(ByteBuffer & buffer) {
     FromByteBuffer(buffer);
 }
 
+void WriteBoardToBuffer(ByteBuffer & buf, const int kBoardSize, const std::vector<std::vector<Color>> & board) {
+    buf.WriteByte(kBoardSize);
+    for(int r = 0; r < kBoardSize; r++) {
+        for(int c = 0; c < kBoardSize; c++) {
+            buf.WriteByte(static_cast<char>(board[r][c]));
+        }
+    }
+}
+
+std::pair<int, std::vector<std::vector<Color>>> ReadBoardFromBuffer(ByteBuffer & buffer) {
+    int boardSize = buffer.ReadByte();
+    std::vector<std::vector<Color>> board;
+    board.resize(boardSize);
+    for(int r = 0; r < boardSize; r++){
+        board[r].resize(boardSize);
+        for(int c = 0; c < boardSize; c++)
+            board[r][c] = static_cast<Color>(buffer.ReadByte());
+    }
+    return {boardSize, board};
+}
+
 ByteBuffer Message::ToByteBuffer() const {
     ByteBuffer buffer;
     buffer.WriteByte(static_cast<char>(type));
@@ -20,8 +41,12 @@ ByteBuffer Message::ToByteBuffer() const {
         buffer.WriteByte(move.GetDestination().column);
     }else if(type == Type::kMessage) {
         buffer.WriteString(message);
+    }else if(type == Type::kBoard) {
+        WriteBoardToBuffer(buffer, boardSize, board);
     }else if(type == Type::kSearchingForGame){
         buffer.WriteString(name + '\n' + opponentName);
+    }else if(type == Type::kGameStart){
+        
     }else{
         spdlog::error("Unknown message Type!\n");
     }
@@ -52,13 +77,9 @@ void Message::FromByteBuffer(ByteBuffer & buffer) {
     }else if(t == Type::kMessage) {
         message = buffer.ReadString();
     }else if(t == Type::kBoard){
-        boardSize = buffer.ReadByte();
-        board.resize(boardSize);
-        for(int r = 0; r < boardSize; r++){
-            board[r].resize(boardSize);
-            for(int c = 0; c < boardSize; c++)
-                board[r][c] = static_cast<Color>(buffer.ReadByte());
-        }
+        auto p = ReadBoardFromBuffer(buffer);
+        boardSize = p.first;
+        board = p.second;
     } else if(t == Type::kSearchingForGame){
         auto names = SplitString(buffer.ReadString());
         if(names.size() != 2) {

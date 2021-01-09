@@ -4,7 +4,6 @@ add_library(common
     src/utils/bytebuffer.cpp
     src/game/game.cpp
     src/game/move.cpp
-    src/game/player.cpp
     src/game/point.cpp
     src/networking/message.cpp
 )

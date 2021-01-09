@@ -16,7 +16,7 @@ Move ReadMoveFromBuffer(ByteBuffer & buffer) {
     return Move(Point(src_r, src_c), Point(dst_r, dst_c));
 }
 
-Move ServerPlayer::GetMove() const {
+Move ServerPlayer::GetMove() {
     auto buffer = player_client->Receive();
     return ReadMoveFromBuffer(buffer);
 }
@@ -25,4 +25,12 @@ void ServerPlayer::Think(Board * board) {
     ByteBuffer buffer;
     board->WriteToBuffer(buffer);
     client_->Send(buffer);
+}
+
+bool ServerPlayer::IsReady() {
+    if(CanReceive()) {
+
+    }else{
+        return false;
+    }
 }

@@ -1,6 +1,8 @@
 #pragma once
 #include "common/networking/tcpclient.h"
 
+#include <atomic>
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
