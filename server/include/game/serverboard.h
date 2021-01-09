@@ -17,6 +17,8 @@ public:
     void WriteToBuffer(ByteBuffer & buffer);
 
     std::string ToString() const;
+
+    std::vector<std::vector<Color>> GetRawBoard() const;
 private:
     void CreateBoard();
     const int kSize;

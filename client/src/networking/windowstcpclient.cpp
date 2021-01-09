@@ -7,7 +7,15 @@
 WindowsTCPClient::WindowsTCPClient(std::string addr, std::string port) :
     address_(addr), port_(port) {
         InitializeWinsock();
+
+        StartThreads();
     }
+
+void WindowsTCPClient::StartThreads() {
+    thread_should_run_ = true;
+    std::thread thread(&WindowsTCPClient::WaitForIncomingMessage, this);
+    thread.detach();
+}
 
 bool WindowsTCPClient::IsConnected() {
     return connected_;
@@ -114,6 +122,8 @@ void WindowsTCPClient::WaitForIncomingMessage() {
     can_receive_ = false;
     char buf[1024];
     while(thread_should_run_){
+        if(!IsConnected())
+            continue;
         int iResult = recv(this->connect_socket_, buf, 1024, 0);
         can_receive_ = false;
         if ( iResult > 0 ){

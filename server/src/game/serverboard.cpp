@@ -92,9 +92,13 @@ std::string ServerBoard::ToString() const {
             if(GetColorAt({r, c}) == Color::kEmpty)
                 s += ' ';
             else
-                s += static_cast<int>(GetColorAt({r, c}));
+                s += '0' + static_cast<int>(GetColorAt({r, c}));
         }
         s += '\n';
     }
     return s;
+}
+
+std::vector<std::vector<Color>> ServerBoard::GetRawBoard() const {
+    return board_;
 }

@@ -63,14 +63,15 @@ void Server::Update() {
         spdlog::info("New connection: {}\n", inet_ntoa((in_addr)caddr.sin_addr));
         FD_SET(cfd, &rmask_);
         FD_SET(cfd, &wmask_);
-        clients_[cfd] = std::make_unique<ServerClient>(cfd);
+        clients_.emplace_back(std::make_unique<ServerClient>(cfd));
         if (cfd > fdmax_)
             fdmax_ = cfd;
     }
     else
     {
-        for(auto & [cfd, client] : clients_)
+        for(auto & client : clients_)
         {
+            int cfd = client->GetFd();
             if (FD_ISSET(cfd, &rmask_tmp))
             {
                 client->SetCanReceive(true);
@@ -85,11 +86,13 @@ void Server::Update() {
             }
         }
     }
-    for(auto & [cfd, client] : clients_) {
-        spdlog::info("cfd={} can_receive={} can_send={}\n", cfd, client->CanReceive(), client->CanSend());
-        if(client->CanReceive()) {
-            ParseMessage(client.get());
-        }
+    
+    spdlog::info("TryToStartGame()\n");
+    TryToStartGame();
+
+    spdlog::info("Updating games\n");
+    for(auto & game : games_){
+        game->Update();
     }
 
     DeleteClients();
@@ -97,51 +100,21 @@ void Server::Update() {
     sleep(1);
 }
 
-void Server::ParseMessage(ServerClient * client) {
-    ByteBuffer buffer = client->Receive();
-    if(buffer.IsEmpty()) {
-        spdlog::info("{} disconnected", client->GetFd());
-        MarkClientToDelete(client->GetFd());
-    }else {
-        Message message(buffer);
-        spdlog::info("Got {} \n", message.ToString());
-        if(message.type == Type::kSearchingForGame) {
-            clients_looking_for_game_.push_back({
-                {client, message.name, message.opponentName}
-            });
-        }else {
-            spdlog::warn("{} parse not handled yet", static_cast<int>(message.type));
-        }
-    }
-}
-
-void Server::MarkClientToDelete(int c) {
-    clients_to_delete_.push_back(c);
-} 
-
 void Server::DeleteClients() {
-    for(int cfd : clients_to_delete_) {
-        clients_.erase(cfd);
-        close(cfd);
-        FD_CLR(cfd, &rmask_);
-        FD_CLR(cfd, &wmask_);
-    }
+    //todo delete clients
     UpdateFDMax();
     clients_to_delete_.resize(0);
 }
 
 void Server::TryToStartGame() {
-    std::vector<int> ids_game_started;
-    for(int i = 0; i < clients_looking_for_game_.size(); i++) {
-        for(int j = i + 1; j < clients_looking_for_game_.size(); j++) {
-            auto info1 = clients_looking_for_game_[i];
-            auto info2 = clients_looking_for_game_[j];
-            if(info1.who == info2.targetName && info2.who == info1.targetName) {
-                ids_game_started.push_back(i);
-                ids_game_started.push_back(j);
-                ServerBoard * board = new ServerBoard()
-                Game * game = new Game() 
-            }
-        }
+    if(clients_.size() == 2 && games_.size() == 0) {
+        spdlog::info("???\n");
+        spdlog::info("{} {}\n", clients_.size(), games_.size());
+        spdlog::info("Starting new game for cfds {} and {}", clients_[0]->GetFd(), clients_[1]->GetFd());
+        spdlog::info("??? 2\n");
+        games_.emplace_back(
+            std::make_unique<Game>(clients_[0].get(), clients_[1].get(), new ServerBoard())
+        );
+        spdlog::info("??? 3\n");
     }
 }

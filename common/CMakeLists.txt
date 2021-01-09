@@ -2,7 +2,6 @@
 add_library(common 
     src/networking/tcpclient.cpp
     src/utils/bytebuffer.cpp
-    src/game/game.cpp
     src/game/move.cpp
     src/game/point.cpp
     src/networking/message.cpp
