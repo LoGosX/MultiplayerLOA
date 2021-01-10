@@ -103,6 +103,8 @@ void WindowsTCPClient::Send(const ByteBuffer & buffer) {
 }
 
 ByteBuffer WindowsTCPClient::Receive() {
+    spdlog::info("Got {} bytes", last_received_buffer_.GetSize());
+    can_receive_ = false;
     return last_received_buffer_;
 }
 

@@ -4,6 +4,8 @@
 #include "common/utils/bytebuffer.h"
 #include "common/game/color.h"
 
+#include <string>
+
 enum class Type : char {
     kGameStarted = 0, //waits for answer from both players
     kGameStartedAccepted = 1, //answer from clients after game starts
@@ -42,4 +44,5 @@ struct Message {
 
     ByteBuffer ToByteBuffer() const;
     void FromByteBuffer(ByteBuffer &);
+    std::string ToString() const;
 };

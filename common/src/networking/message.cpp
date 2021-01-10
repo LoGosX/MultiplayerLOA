@@ -57,10 +57,10 @@ Message::Message(ByteBuffer && buffer) {
 
 ByteBuffer Message::ToByteBuffer() const {
     ByteBuffer buffer;
-    buffer.WriteChar(static_cast<char>(type));
+    buffer.WriteByte(static_cast<char>(type));
     
     if(type == Type::kGameStarted) {
-        buffer.WriteChar(static_cast<char>(color));
+        buffer.WriteByte(static_cast<char>(color));
         WriteBoardToBuffer(buffer, boardSize, boardState);
     } else if(type == Type::kGameStartedAccepted) {
 
@@ -103,4 +103,23 @@ void Message::FromByteBuffer(ByteBuffer & buffer) {
     } else {
         spdlog::error("Unknown message type! {}\n", static_cast<int>(type));
     }
+}
+
+std::string Message::ToString() const {
+    std::stringstream ss;
+    ss << "Message(";
+    if(type == Type::kGameStarted) {
+        ss << "kGameStarted";
+    }else if(type == Type::kGameStartedAccepted) {
+        ss << "kGameStartedAccepted";
+    }else if(type == Type::kRequestingMove) {
+        ss << "kRequestingMove,nMoves=" << avaliableMoves.size();
+    }else if(type == Type::kSendingMove) {
+        ss << "kSendingMove,move=(" << moveMade.GetSource().row << ',' << moveMade.GetSource().column
+            << ")->(" << moveMade.GetDestination().row << ',' << moveMade.GetDestination().column << ')';
+    }else if(type == Type::kMoveOK) {
+        ss << "kMoveOK";
+    }
+    ss << ')';
+    return ss.str();
 }

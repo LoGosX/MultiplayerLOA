@@ -1,5 +1,8 @@
 #include "game/serverboard.h"
 
+#include "spdlog/spdlog.h"
+#include <iostream>
+
 ServerBoard::ServerBoard(int s) :
     kSize(s) {
         CreateBoard();
@@ -23,14 +26,18 @@ void ServerBoard::WriteToBuffer(ByteBuffer & buffer) {
     buffer.WriteByte(static_cast<char>(kSize));
     for(int r = 0; r < kSize; r++) {
         for(int c = 0; c < kSize; c++) {
-            auto color = GetColorAt({r, c});
+            auto color = GetColorAt(r, c);
             buffer.WriteByte(static_cast<char>(color));
         }
     }
 }
 
-Color ServerBoard::GetColorAt(Point p) const {
-    return board_[p.row][p.column];
+Color ServerBoard::GetColorAt(int r, int c) const {
+    if(r < 0 || r >= kSize || c < 0 || c >= kSize) {
+        spdlog::error("{} {} are not valid board coordinates for board of size {}!", r, c, kSize);
+        return Color::kEmpty;
+    }
+    return board_[r][c];
 }
 
 int CountPiecesAlong(const std::vector<std::vector<Color>> & board, int r, int c, int dr, int dc) {
@@ -49,28 +56,30 @@ int CountPiecesAlong(const std::vector<std::vector<Color>> & board, int r, int c
     return count;
 }
 
-bool CanPlaceInDirection(const std::vector<std::vector<Color>> & board, int src_r, int src_c, Color c, int dr, int dc, int dst) {
-    while(src_r > 0 && src_r + 1 < board.size() && src_c > 0 && src_c + 1 < board.size() && dst > 0 && board[src_r][src_c] != c) {
-        src_r += dr;
-        src_c += dc;
+bool ServerBoard::CanPlaceInDirection(int r, int c, Color color, int dr, int dc, int dst) const {
+    while(ValidCoords(r, c) && dst > 0 && (board_[r][c] == color || board_[r][c] == Color::kEmpty)) {
+        r += dr;
+        c += dc;
         dst--;
     }
-    if(!(src_r >= 0 && src_r < board.size() && src_c >= 0 && src_c < board.size()))
-        return false;
-    return dst == 0 && board[src_r][src_c] != c;
+    return ValidCoords(r, c) && dst == 0 && board_[r][c] != color;
+}
+
+bool ServerBoard::ValidCoords(int r, int c) const {
+    return r >= 0 && r < kSize && c >= 0 && c < kSize;
 }
 
 std::vector<Move> ServerBoard::GetMovesFor(Color color) const {
     std::vector<Move> moves;
     for(int r = 0; r < kSize; r++) {
         for(int c = 0; c < kSize; c++) {
-            if(GetColorAt({r, c}) == color) {
+            if(GetColorAt(r, c) == color) {
                 for(int dr = -1; dr <= 1; dr++){
                     for(int dc = -1; dc <= 1; dc++){
                         if(dr == 0 && dc == 0)
                             continue;
                         int dst = CountPiecesAlong(board_, r, c, dr, dc);
-                        if(CanPlaceInDirection(board_, r, c, color, dr, dc, dst)) {
+                        if(CanPlaceInDirection(r, c, color, dr, dc, dst)) {
                             moves.push_back(Move({r, c}, {r + dst * dr, c + dst * dc}));
                         }
                     }
@@ -89,10 +98,10 @@ std::string ServerBoard::ToString() const {
     std::string s;
     for(int r = 0; r < kSize; r++) {
         for(int c = 0; c < kSize; c++){
-            if(GetColorAt({r, c}) == Color::kEmpty)
+            if(GetColorAt(r, c) == Color::kEmpty)
                 s += ' ';
             else
-                s += '0' + static_cast<int>(GetColorAt({r, c}));
+                s += '0' + static_cast<int>(GetColorAt(r, c));
         }
         s += '\n';
     }

@@ -87,10 +87,10 @@ void Server::Update() {
         }
     }
     
-    spdlog::info("TryToStartGame()\n");
+    //spdlog::info("TryToStartGame()\n");
     TryToStartGame();
 
-    spdlog::info("Updating games\n");
+    //spdlog::info("Updating games\n");
     for(auto & game : games_){
         game->Update();
     }

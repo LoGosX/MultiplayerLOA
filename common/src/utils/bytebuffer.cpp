@@ -69,3 +69,11 @@ std::string ByteBuffer::ReadStringUntil(char terminal) {
     }
     return result;
 }
+
+std::string ByteBuffer::ToString() const {
+    std::string result;
+    for(int i = 0; i < GetSize(); i++) {
+        result += std::to_string(buffer_[tail_ + i]) + ' ';
+    }
+    return result;
+}

@@ -35,6 +35,8 @@ void Game::Start() {
 }
 
 bool Game::CheckForAccept() {
+    if(p1_accepted_ && p2_accepted_)
+        return true;
     if(!p1_accepted_) {
         if(players_[0].client->CanReceive()) {
             p1_accepted_ = Message(players_[0].client->Receive()).type == Type::kGameStartedAccepted;
@@ -45,7 +47,12 @@ bool Game::CheckForAccept() {
             p2_accepted_ = Message(players_[1].client->Receive()).type == Type::kGameStartedAccepted;
         }
     }
-    return p1_accepted_ && p2_accepted_;
+    if(p1_accepted_ && p2_accepted_){
+        spdlog::info("Both players accepted\n");
+        return true;
+    }else{
+        return false;
+    }
 }
 
 
@@ -63,9 +70,9 @@ void Game::RequestMoveFromCurrentPlayer() {
     Message message;
     message.type = Type::kRequestingMove;
     auto moves = board_->GetMovesFor(CurrentPlayer().color);
-    spdlog::info(moves.size());
-    message.boardSize = moves.size();
+    message.avaliableMovesCount = moves.size();
     message.avaliableMoves = moves;
+    spdlog::info("Sending {}", message.ToString());
     CurrentPlayer().client->Send(message.ToByteBuffer());
 }
 
@@ -75,18 +82,20 @@ Game::GamePlayer Game::SwitchPlayer() {
 }
 
 void Game::Update() {
-    if(!CheckForAccept())
-        return;
-    RequestMoveFromCurrentPlayer();
+    if(!(p1_accepted_ && p2_accepted_)) {
+        if(CheckForAccept()) {
+            RequestMoveFromCurrentPlayer();
+        }
+    }
     auto [client, color] = CurrentPlayer();
     if(client->CanReceive()) {
         ByteBuffer buf = client->Receive();
         Message message(buf);
+        spdlog::info("Got {}", message.ToString());
         if(message.type == Type::kSendingMove) {
             AcceptAndDoMove(message);
-            
             SwitchPlayer();
-            
+            RequestMoveFromCurrentPlayer();
             spdlog::info("Move was made\n");
         }
 

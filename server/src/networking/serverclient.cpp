@@ -27,7 +27,8 @@ void ServerClient::SetCanSend(bool v) {
 
 
 void ServerClient::Send(const ByteBuffer & buffer) {
-    spdlog::info("Sending: {}", buffer.GetBuffer() );
+    spdlog::info("Sending {} bytes", buffer.GetSize() );
+    spdlog::info("Sending buffer {}", buffer.ToString());
     write(fd_, buffer.GetBuffer(), buffer.GetSize());
 }
 
