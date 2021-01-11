@@ -11,6 +11,8 @@
 
 #include "SFML/Graphics.hpp"
 
+#include "app/app.h"
+
 void sfmlTest() {
     sf::RenderWindow window(sf::VideoMode(200, 200), "SFML works!");
     sf::CircleShape shape(100.f);
@@ -31,8 +33,14 @@ void sfmlTest() {
     }
 }
 
+void windowTest() {
+    App app;
+    app.Run();
+}
+
 int main(int argc, char const *argv[])
 {
+    windowTest();
     sfmlTest();
     spdlog::info("sizeof(char)={}",sizeof(char));
     TCPClient * client = new WindowsTCPClient("127.0.0.1", "1234");
