@@ -3,7 +3,7 @@
 #include "common/game/color.h"
 #include "common/networking/message.h"
 
-class Client;
+class ServerClient;
 class ServerBoard;
 
 class Game {
@@ -13,26 +13,27 @@ public:
         P1_TURN,
         P2_TURN,
         P1_WON,
-        P2_WON
+        P2_WON,
+        GAME_FORCEFULLY_ENDED
     };
 
-    Game(Client * p1, Client * p2, ServerBoard * board);
+    Game(ServerClient * p1, ServerClient * p2, ServerBoard * board);
 
     void Update();
 
     void Start();
 
     GameStatus GetStatus() const;
-
 private:
     bool CheckForAccept();
     void AcceptAndDoMove(Message);
     void RequestMoveFromCurrentPlayer();
+    void InvalidateBothPlayers();
     bool p1_accepted_ = false, p2_accepted_ = false;
     GameStatus status_;
     struct GamePlayer
     {
-        Client * client;
+        ServerClient * client;
         Color color;
     };
     GamePlayer CurrentPlayer() const;

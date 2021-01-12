@@ -12,6 +12,7 @@ enum class Type : char {
     kRequestingMove = 2, //server requests move from the player
     kSendingMove = 3, //client sends move made
     kMoveOK = 4, //move sent is valid move
+    kSearchingForGame = 5, //first message from the client containing enemy ip
 };
 
 struct Message {
@@ -30,6 +31,7 @@ struct Message {
     std::vector<std::vector<Color>> boardState;
 
     //kGameStartedAccepted
+    std::string opponentIP;
 
     //kRequestingMove
     int avaliableMovesCount;

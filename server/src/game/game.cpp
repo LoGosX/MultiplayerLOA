@@ -1,13 +1,13 @@
 #include "game/game.h"
 #include "game/serverboard.h"
-#include "common/networking/client.h"
+#include "networking/serverclient.h"
 #include "common/networking/message.h"
 
 #include "spdlog/spdlog.h"
 
 #include <iostream>
 
-Game::Game(Client * p1, Client * p2, ServerBoard * board) {
+Game::Game(ServerClient * p1, ServerClient * p2, ServerBoard * board) {
     players_[0].client = p1;
     players_[0].color = Color::kBlack;
     players_[1].client = p2;
@@ -39,15 +39,26 @@ void Game::Start() {
 bool Game::CheckForAccept() {
     if(p1_accepted_ && p2_accepted_)
         return true;
+    ByteBuffer buf;
     if(!p1_accepted_) {
         if(players_[0].client->CanReceive()) {
-            p1_accepted_ = Message(players_[0].client->Receive()).type == Type::kGameStartedAccepted;
+            buf = players_[0].client->Receive();
+            if(buf.IsEmpty()) {
+                status_ = GameStatus::GAME_FORCEFULLY_ENDED;
+                InvalidateBothPlayers();
+                return false;
+            }
+            p1_accepted_ = Message(buf).type == Type::kGameStartedAccepted;
         }
     }
     if(!p2_accepted_) {
-        if(players_[0].client->CanReceive()) {
-            p2_accepted_ = Message(players_[1].client->Receive()).type == Type::kGameStartedAccepted;
+        buf = players_[1].client->Receive();
+        if(buf.IsEmpty()) {
+            status_ = GameStatus::GAME_FORCEFULLY_ENDED;
+            InvalidateBothPlayers();
+            return false;
         }
+        p2_accepted_ = Message(buf).type == Type::kGameStartedAccepted;
     }
     if(p1_accepted_ && p2_accepted_){
         spdlog::info("Both players accepted\n");
@@ -88,6 +99,8 @@ Game::GamePlayer Game::SwitchPlayer() {
 }
 
 void Game::Update() {
+    if(status_ == GameStatus::GAME_FORCEFULLY_ENDED)
+        return;
     if(!(p1_accepted_ && p2_accepted_)) {
         if(CheckForAccept()) {
             RequestMoveFromCurrentPlayer();
@@ -96,6 +109,11 @@ void Game::Update() {
     auto [client, color] = CurrentPlayer();
     if(client->CanReceive()) {
         ByteBuffer buf = client->Receive();
+        if(buf.IsEmpty()){
+            status_ = GameStatus::GAME_FORCEFULLY_ENDED;
+            InvalidateBothPlayers();
+            return;
+        }
         Message message(buf);
         spdlog::info("Got {}", message.ToString());
         if(message.type == Type::kSendingMove) {
@@ -107,4 +125,13 @@ void Game::Update() {
 
         std::cout << board_->ToString() << "\n---------\n"; 
     }
+}
+
+void Game::InvalidateBothPlayers() {
+    players_[0].client->Invalidate();
+    players_[1].client->Invalidate();
+}
+
+Game::GameStatus Game::GetStatus() const {
+    return status_;
 }

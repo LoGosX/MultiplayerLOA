@@ -20,10 +20,17 @@ private:
     void DeleteClients();
     void MarkClientToDelete(int cfd);
     void TryToStartGame();
-    
+    void RemoveInvalidated();
     std::vector<int> clients_to_delete_;
     fd_set rmask_, wmask_;
     int sfd_, fdmax_, timeout_;
+
+    struct ConnectionInfo {
+        ServerClient * client;
+        std::string ip, opponentIP;
+        bool inGame = false;
+    };
     std::vector<std::unique_ptr<ServerClient>> clients_;
-    std::vector<std::unique_ptr<Game>> games_;    
+    std::vector<std::unique_ptr<Game>> games_;
+    std::vector<ConnectionInfo> infos_;
 };

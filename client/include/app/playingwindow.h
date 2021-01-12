@@ -14,6 +14,8 @@ public:
     void Update() override;
     void PoolEvents() override;
     void SetClient(TCPClient *);
+    bool IsOK() const;
+    std::string GetError() const;
 private:
     void DrawBoard();
     void SetupBoard();
@@ -35,4 +37,6 @@ private:
     Point moveSource_;
     float tileSize_;
     bool myTurn_ = false;
+    bool isOk_;
+    std::string error_;
 };

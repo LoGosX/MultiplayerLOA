@@ -60,17 +60,22 @@ void Server::Update() {
     {
         slt = sizeof(caddr);
         cfd = accept(sfd_, (sockaddr *)&caddr, &slt);
-        spdlog::info("New connection: {}\n", inet_ntoa((in_addr)caddr.sin_addr));
+        std::string ip(inet_ntoa((in_addr)caddr.sin_addr));
+        spdlog::info("New connection: {}\n", ip);
         FD_SET(cfd, &rmask_);
         FD_SET(cfd, &wmask_);
         clients_.emplace_back(std::make_unique<ServerClient>(cfd));
+        infos_.push_back({clients_.back().get(), ip, ""});
         if (cfd > fdmax_)
             fdmax_ = cfd;
     }
     else
     {
+        RemoveInvalidated();
         for(auto & client : clients_)
         {
+            if(!client->IsValid())
+                continue;
             int cfd = client->GetFd();
             if (FD_ISSET(cfd, &rmask_tmp))
             {
@@ -87,10 +92,8 @@ void Server::Update() {
         }
     }
     
-    //spdlog::info("TryToStartGame()\n");
     TryToStartGame();
 
-    //spdlog::info("Updating games\n");
     for(auto & game : games_){
         game->Update();
     }
@@ -100,6 +103,28 @@ void Server::Update() {
     sleep(1);
 }
 
+void Server::RemoveInvalidated() {
+    for(int i = infos_.size() - 1; i >= 0; i--) {
+        if(!infos_[i].client->IsValid()){
+            spdlog::info("{} invalidated", infos_[i].ip);
+            std::swap(infos_[i], infos_.back());
+            infos_.pop_back();
+        }
+    }
+    for(int i = clients_.size() - 1; i >= 0; i--) {
+        if(!clients_[i]->IsValid()){
+            std::swap(clients_[i], clients_.back());
+            clients_.pop_back();
+        }
+    }
+    for(int i = games_.size() - 1; i >= 0; i--) {
+        if(games_[i]->GetStatus() == Game::GameStatus::GAME_FORCEFULLY_ENDED) {
+            std::swap(games_[i], games_.back());
+            games_.pop_back();
+        }
+    }
+}
+
 void Server::DeleteClients() {
     //todo delete clients
     UpdateFDMax();
@@ -107,14 +132,24 @@ void Server::DeleteClients() {
 }
 
 void Server::TryToStartGame() {
-    if(clients_.size() == 2 && games_.size() == 0) {
-        spdlog::info("???\n");
-        spdlog::info("{} {}\n", clients_.size(), games_.size());
-        spdlog::info("Starting new game for cfds {} and {}", clients_[0]->GetFd(), clients_[1]->GetFd());
-        spdlog::info("??? 2\n");
-        games_.emplace_back(
-            std::make_unique<Game>(clients_[0].get(), clients_[1].get(), new ServerBoard())
-        );
-        spdlog::info("??? 3\n");
+    for(auto & inf : infos_) {
+        if(inf.opponentIP.empty() && inf.client->CanReceive()) {
+            Message m(inf.client->Receive());
+            inf.opponentIP = m.opponentIP;
+        }
+    }
+    for(int i = 0; i < infos_.size(); i++) {
+        for(int j = i + 1; j < infos_.size(); j++) {
+            if(infos_[i].inGame || infos_[j].inGame || infos_[i].opponentIP.empty() || infos_[j].opponentIP.empty())
+                continue;
+            if(infos_[i].opponentIP == infos_[j].ip && infos_[i].ip == infos_[j].opponentIP){
+                spdlog::info("Starting new game between {} and {}", infos_[i].ip, infos_[j].ip);
+                infos_[i].inGame = true;
+                infos_[j].inGame = true;
+                games_.emplace_back(
+                    std::make_unique<Game>(infos_[i].client, infos_[j].client, new ServerBoard())
+                );
+            }
+        }
     }
 }

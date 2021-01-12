@@ -53,3 +53,11 @@ bool ServerClient::CanSend() {
 int ServerClient::GetFd() const {
     return fd_;
 }
+
+bool ServerClient::IsValid() const {
+    return valid_;
+}
+
+void ServerClient::Invalidate() {
+    valid_ = false;
+}

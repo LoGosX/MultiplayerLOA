@@ -134,8 +134,11 @@ void WindowsTCPClient::WaitForIncomingMessage() {
         }
         else if ( iResult == 0 ){
             spdlog::error("Connection closed in receive\n");
+            return;
         }
-        else
+        else{
             spdlog::error("recv failed with error: {}\n", WSAGetLastError());
+            return;
+        }
     }
 }

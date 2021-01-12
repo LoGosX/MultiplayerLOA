@@ -153,3 +153,12 @@ void PlayingWindow::DoMove() {
     moveSource_ = Point(-1, -1);
     shaded_.resize(0);
 }
+
+bool PlayingWindow::IsOK() const {
+    return isOk_;
+}
+
+
+std::string PlayingWindow::GetError() const {
+    return error_;
+}

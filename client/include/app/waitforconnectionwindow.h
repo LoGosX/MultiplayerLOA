@@ -7,13 +7,17 @@ public:
     void Update() override;
     void PoolEvents() override;
     bool IsReady() const;
-    void SetNotReady(std::string message="");
+    void Reset(std::string message="");
 
-    std::string GetIP() const;
+    std::string GetServerIP() const;
+    std::string GetClientIP() const;
 
+    void SetMessage(std::string);
 private:
     std::string message_;
-    std::string string_ = "127.0.0.1";
+    std::string serverIpString_ = "127.0.0.1";
+    std::string clientIpString_ = "127.0.0.1";
     sf::Text text_;
     bool ready_ = false;
+    bool serverIpSelected_ = true;
 };
