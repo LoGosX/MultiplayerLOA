@@ -22,6 +22,8 @@ void Game::Start() {
     spdlog::info("Starting game\n");
     Message message;
     message.type = Type::kGameStarted;
+    message.boardSize = board_->GetSize();
+    message.boardState = board_->GetRawBoard();
     
     message.color = players_[0].color;
     players_[0].client->Send(message.ToByteBuffer());
@@ -59,6 +61,8 @@ bool Game::CheckForAccept() {
 void Game::AcceptAndDoMove(Message message) {
     board_->DoMove(message.moveMade);
     message.type = Type::kMoveOK;
+    message.boardSize = board_->GetSize();
+    message.boardState = board_->GetRawBoard();
     players_[current_player_].client->Send(message.ToByteBuffer());
 }
 
@@ -72,6 +76,8 @@ void Game::RequestMoveFromCurrentPlayer() {
     auto moves = board_->GetMovesFor(CurrentPlayer().color);
     message.avaliableMovesCount = moves.size();
     message.avaliableMoves = moves;
+    message.boardSize = board_->GetSize();
+    message.boardState = board_->GetRawBoard();
     spdlog::info("Sending {}", message.ToString());
     CurrentPlayer().client->Send(message.ToByteBuffer());
 }

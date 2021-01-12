@@ -5,4 +5,6 @@ struct Point {
     int column = -1;
     Point() = default;
     Point(int row, int column);
+
+    bool operator==(const Point &) const;
 };

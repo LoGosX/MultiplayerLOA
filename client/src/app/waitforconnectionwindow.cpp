@@ -13,7 +13,7 @@ bool IsNumeric(sf::Keyboard::Key k) {
 void WFCW::PoolEvents() {
     sf::Event ev;
     while(window_.pollEvent(ev)) {
-        if(ev.type == sf::Event::Closed){
+        if(ev.type == sf::Event::Closed || ev.type == sf::Event::KeyPressed && ev.key.code == sf::Keyboard::Escape){
             window_.close();
             return;
         }
@@ -24,6 +24,8 @@ void WFCW::PoolEvents() {
             }else if(k == sf::Keyboard::Enter){
                 ready_ = true;
             }else{
+                if(string_.size() >= 15)
+                    continue;
                 if(k == sf::Keyboard::Key::Period){
                     string_.push_back('.');
                 }else if(IsNumeric(k)){
@@ -35,24 +37,30 @@ void WFCW::PoolEvents() {
 }
 
 void WFCW::Update() {
+    
     // select the font
-    text.setFont(kFont); // font is a sf::Font
+    text_.setFont(kFont); // font is a sf::Font
 
     // set the string to display
-    text.setString(string_);
+    text_.setString(string_);
 
     // set the character size
-    text.setCharacterSize(24); // in pixels, not points!
+    text_.setCharacterSize(54); // in pixels, not points!
 
     // set the color
-    text.setFillColor(sf::Color::Red);
+    text_.setFillColor(sf::Color::Red);
 
     // set the text style
-    text.setStyle(sf::Text::Bold | sf::Text::Underlined);
+    text_.setStyle(sf::Text::Bold);
 
+    auto size = window_.getSize();
+    sf::FloatRect textRect = text_.getLocalBounds();
+    text_.setOrigin(textRect.left + textRect.width/2.0f,
+                textRect.top  + textRect.height/2.0f);
+    text_.setPosition(sf::Vector2f(size.x/2.0f,size.y/2.0f));
 
     window_.clear();
-    window_.draw(text);
+    window_.draw(text_);
     window_.display();
 }
 
@@ -63,4 +71,8 @@ bool WFCW::IsReady() const {
 void WFCW::SetNotReady(std::string message) {
     message_ = message;
     ready_ = false;
+}
+
+std::string WFCW::GetIP() const {
+    return string_;
 }

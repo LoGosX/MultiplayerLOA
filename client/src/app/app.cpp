@@ -9,7 +9,10 @@ App::App() {
             spdlog::error("Could not load font");
         }
         connection_ = std::make_unique<WaitForConnectionWindow>(
-            sf::VideoMode(1200, 900), "MultiplayerLOA", font_
+            sf::VideoMode(900, 900), "MultiplayerLOA", font_
+            );
+        playing_ = std::make_unique<PlayingWindow>(
+            sf::VideoMode(900, 900), "MultiplayerLOA", font_
             );
         current_window_ = connection_.get();
     }
@@ -25,8 +28,26 @@ void App::Run() {
 }
 
 void App::AppLoop() {
-    //std::cout << connection_.GetIP() << std::endl;
-    //std::cout << connection_.IsReady() << std::endl;
     if(state_ == AppState::kWaitingForConnection){
+        if(connection_->IsReady()) {
+            spdlog::info("Trying to connect to {}", connection_->GetIP());
+            WindowsTCPClient * client = new WindowsTCPClient(connection_->GetIP(), "1234");
+            client_.reset(client);
+            timer_.Start(5000);
+            state_ = AppState::kTryingToConnect;
+        }
+    }else if(state_ == AppState::kTryingToConnect) {
+        if(!timer_.Finished()) {
+            client_->Connect();
+        }
+        if(client_->IsConnected()) {
+            state_ = AppState::kPlaying;
+            current_window_->Close();
+            current_window_ = playing_.get();
+            playing_->Open();
+            playing_->SetClient(client_.get());
+        }
+    }else if(state_ == AppState::kPlaying) {
+
     }
 }

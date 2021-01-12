@@ -6,7 +6,7 @@ Window::Window(sf::VideoMode vm, std::string title, const sf::Font & font) :
     }
 
 void Window::Open() {
-    window_.create(vm_, title_);
+    window_.create(vm_, title_, sf::Style::Titlebar | sf::Style::Close);
 }
 
 void Window::Close() {

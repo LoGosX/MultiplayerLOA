@@ -4,6 +4,7 @@ set(SOURCE_FILES
     src/app/app.cpp
     src/app/window.cpp
     src/app/waitforconnectionwindow.cpp
+    src/app/playingwindow.cpp
     src/app/windowarea.cpp
 )
 

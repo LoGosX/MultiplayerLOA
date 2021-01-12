@@ -68,10 +68,11 @@ ByteBuffer Message::ToByteBuffer() const {
         buffer.WriteByte(avaliableMovesCount);
         for(auto m : avaliableMoves)
             WriteMoveToBuffer(buffer, m);
+        WriteBoardToBuffer(buffer, boardSize, boardState);
     } else if(type == Type::kSendingMove) {
         WriteMoveToBuffer(buffer, moveMade);
     } else if(type == Type::kMoveOK) {
-
+        WriteBoardToBuffer(buffer, boardSize, boardState);
     } else {
         spdlog::error("Unknown message type received! {}\n", static_cast<int>(type));
     }
@@ -96,10 +97,15 @@ void Message::FromByteBuffer(ByteBuffer & buffer) {
         avaliableMoves.resize(avaliableMovesCount);
         for(int i = 0; i < avaliableMovesCount; i++)
             avaliableMoves[i] = ReadMoveFromBuffer(buffer);
+        auto p = ReadBoardFromBuffer(buffer);
+        boardSize = p.first;
+        boardState = p.second;
     } else if(type == Type::kSendingMove) {
         moveMade = ReadMoveFromBuffer(buffer);
     } else if(type == Type::kMoveOK) {
-
+        auto p = ReadBoardFromBuffer(buffer);
+        boardSize = p.first;
+        boardState = p.second;
     } else {
         spdlog::error("Unknown message type! {}\n", static_cast<int>(type));
     }

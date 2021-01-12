@@ -13,7 +13,7 @@ public:
 
 private:
     std::string message_;
-    std::string string_;
-    sf::Text text;
+    std::string string_ = "127.0.0.1";
+    sf::Text text_;
     bool ready_ = false;
 };

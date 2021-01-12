@@ -7,9 +7,9 @@ class Window {
 public:
     Window(sf::VideoMode, std::string, const sf::Font &);
     virtual ~Window() = default;
-    void Open();
-    void Close();
-    bool IsOpen() const;
+    virtual void Open();
+    virtual void Close();
+    virtual bool IsOpen() const;
     virtual void Update() = 0;
     virtual void PoolEvents() = 0;
 private:
