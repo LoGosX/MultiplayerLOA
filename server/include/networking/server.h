@@ -17,10 +17,10 @@ public:
 private:
     void UpdateFDMax();
     void ParseMessage(ServerClient * client);
-    void DeleteClients();
     void MarkClientToDelete(int cfd);
     void TryToStartGame();
     void RemoveInvalidated();
+    void DeleteGames();
     std::vector<int> clients_to_delete_;
     fd_set rmask_, wmask_;
     int sfd_, fdmax_, timeout_;

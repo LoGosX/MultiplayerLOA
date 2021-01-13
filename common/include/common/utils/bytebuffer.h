@@ -24,7 +24,7 @@ public:
 
     Byte ReadByte();
     char ReadChar();
-    std::string ReadString(int n_chars = -1);
+    std::string ReadString();
     std::string ReadStringUntil(char terminal);
 
     std::string ToString() const;

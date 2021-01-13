@@ -3,7 +3,7 @@
 #include <sstream>
 
 void WriteBoardToBuffer(ByteBuffer & buf, const int kBoardSize, const std::vector<std::vector<Color>> & board) {
-    buf.WriteByte(kBoardSize);
+    buf.WriteByte(static_cast<char>(kBoardSize));
     for(int r = 0; r < kBoardSize; r++) {
         for(int c = 0; c < kBoardSize; c++) {
             buf.WriteByte(static_cast<char>(board[r][c]));
@@ -65,7 +65,7 @@ ByteBuffer Message::ToByteBuffer() const {
     } else if(type == Type::kGameStartedAccepted) {
         
     } else if(type == Type::kRequestingMove) {
-        buffer.WriteByte(avaliableMovesCount);
+        buffer.WriteByte(static_cast<char>(avaliableMovesCount));
         for(auto m : avaliableMoves)
             WriteMoveToBuffer(buffer, m);
         WriteBoardToBuffer(buffer, boardSize, boardState);
@@ -75,6 +75,8 @@ ByteBuffer Message::ToByteBuffer() const {
         WriteBoardToBuffer(buffer, boardSize, boardState);
     } else if(type == Type::kSearchingForGame){
         buffer.WriteString(opponentIP);
+    } else if(type == Type::kGameEnded){
+        buffer.WriteByte(static_cast<char>(gameResult));
     }else {
         spdlog::error("Unknown message type received! {}\n", static_cast<int>(type));
     }
@@ -109,6 +111,8 @@ void Message::FromByteBuffer(ByteBuffer & buffer) {
         boardState = p.second;
     } else if(type == Type::kSearchingForGame){
         opponentIP = buffer.ReadString();
+    }else if(type == Type::kGameEnded){
+        gameResult = static_cast<Color>(buffer.ReadByte());
     }else {
         spdlog::error("Unknown message type! {}\n", static_cast<int>(type));
     }

@@ -70,7 +70,6 @@ void Server::Update() {
     }
     else
     {
-        RemoveInvalidated();
         for(auto & client : clients_)
         {
             if(!client->IsValid())
@@ -91,15 +90,16 @@ void Server::Update() {
         }
     }
     
+    RemoveInvalidated();
+    DeleteGames();
     TryToStartGame();
 
     for(auto & game : games_){
-        game->Update();
+        if(!game->Ended())
+            game->Update();
     }
 
-    DeleteClients();
 
-    sleep(1);
 }
 
 void Server::RemoveInvalidated() {
@@ -124,10 +124,14 @@ void Server::RemoveInvalidated() {
     }
 }
 
-void Server::DeleteClients() {
-    //todo delete clients
-    UpdateFDMax();
-    clients_to_delete_.resize(0);
+
+void Server::DeleteGames() {
+    for(int i = (int)games_.size() - 1; i >= 0; i--) {
+        if(games_[i]->Ended()){
+            std::swap(games_[i], games_.back());
+            games_.pop_back();
+        }
+    }
 }
 
 void Server::TryToStartGame() {

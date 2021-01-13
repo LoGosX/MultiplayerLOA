@@ -9,33 +9,44 @@
 #include "common/networking/tcpclient.h"
 
 void PlayingWindow::Update() {
-    if(client_->CanReceive()){
-        auto buffer = client_->Receive();
-        spdlog::info("Got buffer {}", buffer.ToString());
-        Message message(buffer);
-        spdlog::info("Got {}", message.ToString());
-        if(message.type == Type::kGameStarted) {
-            std::cout << message.boardState.size() << std::endl;
-            board_ = message.boardState;
-            my_color_ = message.color;
-            message.type = Type::kGameStartedAccepted;
-            client_->Send(message.ToByteBuffer());
-            spdlog::info("Sending {}", message.ToString());
-            SetupBoard();
-        }else if(message.type == Type::kRequestingMove){
-            myTurn_ = true;
-            moves_ = message.avaliableMoves;
-            board_ = message.boardState;
-        }else if(message.type == Type::kMoveOK) {
-            moves_ = message.avaliableMoves;
-            board_ = message.boardState;
-            spdlog::info("Move was correct.");
+    if(!ended_){
+        if(client_->CanReceive()){
+            auto buffer = client_->Receive();
+            Message message(buffer);
+            if(message.type == Type::kGameStarted) {
+                std::cout << message.boardState.size() << std::endl;
+                board_ = message.boardState;
+                my_color_ = message.color;
+                message.type = Type::kGameStartedAccepted;
+                client_->Send(message.ToByteBuffer());
+                SetupBoard();
+            }else if(message.type == Type::kRequestingMove){
+                myTurn_ = true;
+                moves_ = message.avaliableMoves;
+                board_ = message.boardState;
+            }else if(message.type == Type::kMoveOK) {
+                moves_ = message.avaliableMoves;
+                board_ = message.boardState;
+            }else if(message.type == Type::kGameEnded) {
+                ended_ = true;
+                result_ = message.gameResult;
+                spdlog::info("Game ended. Winner is {}", static_cast<int>(result_));
+                return;
+            }
         }
     }
-    
     window_.clear();
     DrawBoard();
     window_.display();
+}
+
+void PlayingWindow::Reset() {
+    myTurn_ = false;
+    ended_ = false;
+}
+
+bool PlayingWindow::DidWon() const {
+    return result_ == my_color_;
 }
 
 void PlayingWindow::SetupBoard() {
@@ -67,8 +78,13 @@ void PlayingWindow::DisplayMessage(std::string m){
 }
 
 void PlayingWindow::DrawBoard() {
-    if(board_.empty()){
-        DisplayMessage("Waiting for server...");
+    if(board_.empty() || ended_){
+        if(board_.empty())
+            DisplayMessage("Waiting for server...");
+        else if(DidWon())
+            DisplayMessage("You won!");
+        else
+            DisplayMessage("You lost...");
         return;
     }
     for(int i = 0; i < board_.size(); i++) {
@@ -139,12 +155,11 @@ void PlayingWindow::OnMouseClick() {
     auto pos = sf::Mouse::getPosition(window_);
     int r = (int)(pos.x / tileSize_);
     int c = (int)(pos.y / tileSize_);
-    spdlog::info("Mouse position: {} {} (board = {} {})", pos.x, pos.y, r, c);
     if(CoordsInBoard(r, c)) {
         if(!shaded_.empty() && ValidMove(r, c) ) {
             moveDestination_ = Point(r, c);
             DoMove();
-            return; //TODO ?
+            return;
         }else {
             shaded_.resize(0);
             if(board_[r][c] == my_color_){
@@ -163,7 +178,6 @@ void PlayingWindow::DoMove() {
     Message message;
     message.type = Type::kSendingMove;
     message.moveMade = Move(moveSource_, moveDestination_);
-    spdlog::info("Sending {}", message.ToString());
     client_->Send(message.ToByteBuffer());
     myTurn_ = false;
     moveSource_ = Point(-1, -1);

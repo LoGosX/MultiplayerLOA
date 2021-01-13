@@ -16,6 +16,10 @@ public:
     void SetClient(TCPClient *);
     bool IsOK() const;
     std::string GetError() const;
+    bool Ended() const;
+    bool DidWon() const;
+    Color GetResult() const;
+    void Reset();
 private:
     void DrawBoard();
     void SetupBoard();
@@ -39,5 +43,7 @@ private:
     float tileSize_;
     bool myTurn_ = false;
     bool isOk_;
+    bool ended_ = false;
     std::string error_;
+    Color result_;
 };

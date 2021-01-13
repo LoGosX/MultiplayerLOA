@@ -13,6 +13,7 @@ enum class Type : char {
     kSendingMove = 3, //client sends move made
     kMoveOK = 4, //move sent is valid move
     kSearchingForGame = 5, //first message from the client containing enemy ip
+    kGameEnded = 6, //returns color of winner. Color::kEmpty otherwise
 };
 
 struct Message {
@@ -43,6 +44,11 @@ struct Message {
     Move moveMade;
 
     //kMoveOK
+
+    //kSearchingForGame
+
+    //kGameEnded
+    Color gameResult;
 
     ByteBuffer ToByteBuffer() const;
     void FromByteBuffer(ByteBuffer &);

@@ -24,11 +24,14 @@ public:
     void Start();
 
     GameStatus GetStatus() const;
+    bool Ended() const;
 private:
     bool CheckForAccept();
     void AcceptAndDoMove(Message);
     void RequestMoveFromCurrentPlayer();
     void InvalidateBothPlayers();
+    void EndGame(Color result);
+    bool CheckForGameEnd();
     bool p1_accepted_ = false, p2_accepted_ = false;
     GameStatus status_;
     struct GamePlayer
@@ -41,4 +44,5 @@ private:
     GamePlayer players_[2];
     int current_player_ = 0;
     ServerBoard * board_ = nullptr;
+    bool ended_ = false;
 };

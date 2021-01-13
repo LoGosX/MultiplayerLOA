@@ -19,7 +19,6 @@ Game::Game(ServerClient * p1, ServerClient * p2, ServerBoard * board) {
 
 
 void Game::Start() {
-    spdlog::info("Starting game\n");
     Message message;
     message.type = Type::kGameStarted;
     message.boardSize = board_->GetSize();
@@ -33,7 +32,6 @@ void Game::Start() {
 
     status_ = GameStatus::P1_TURN;
     message.boardState = board_->GetRawBoard();
-    spdlog::info("Game started\n");
 }
 
 bool Game::CheckForAccept() {
@@ -63,7 +61,6 @@ bool Game::CheckForAccept() {
         }
     }
     if(p1_accepted_ && p2_accepted_){
-        spdlog::info("Both players accepted\n");
         return true;
     }else{
         return false;
@@ -91,7 +88,6 @@ void Game::RequestMoveFromCurrentPlayer() {
     message.avaliableMoves = moves;
     message.boardSize = board_->GetSize();
     message.boardState = board_->GetRawBoard();
-    spdlog::info("Sending {}", message.ToString());
     CurrentPlayer().client->Send(message.ToByteBuffer());
 }
 
@@ -100,8 +96,31 @@ Game::GamePlayer Game::SwitchPlayer() {
     return CurrentPlayer();
 }
 
+void Game::EndGame(Color result) {
+    Message m;
+    m.type = Type::kGameEnded;
+    m.gameResult = result;
+    players_[0].client->Send(m.ToByteBuffer());
+    players_[1].client->Send(m.ToByteBuffer());
+    ended_ = true;
+    status_ = (result == players_[0].color ? GameStatus::P1_WON : GameStatus::P2_WON);
+    InvalidateBothPlayers();
+}
+
+bool Game::Ended() const {
+    return ended_;
+}
+
+bool Game::CheckForGameEnd() {
+    auto result = board_->GetWinner();
+    if(result != Color::kEmpty){
+        EndGame(result);
+        return true;
+    }
+    return false;
+}
+
 void Game::Update() {
-    spdlog::info("Game::Update()");
     if(status_ == GameStatus::GAME_FORCEFULLY_ENDED)
         return;
     if(!(p1_accepted_ && p2_accepted_)) {
@@ -118,15 +137,15 @@ void Game::Update() {
             return;
         }
         Message message(buf);
-        spdlog::info("Got {}", message.ToString());
         if(message.type == Type::kSendingMove) {
             AcceptAndDoMove(message);
+            if(CheckForGameEnd()) {
+                //game ended
+                return;
+            }
             SwitchPlayer();
             RequestMoveFromCurrentPlayer();
-            spdlog::info("Move was made\n");
         }
-
-        std::cout << board_->ToString() << "\n---------\n"; 
     }
 }
 

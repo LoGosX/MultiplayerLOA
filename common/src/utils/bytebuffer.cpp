@@ -50,7 +50,7 @@ char ByteBuffer::ReadChar() {
     return static_cast<char>(ReadByte());
 }
 
-std::string ByteBuffer::ReadString(int n_chars) {
+std::string ByteBuffer::ReadString() {
     return ReadStringUntil((char)0);
 }
 
