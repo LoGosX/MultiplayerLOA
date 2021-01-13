@@ -58,7 +58,7 @@ void PlayingWindow::DrawBoard() {
     for(int i = 0; i < board_.size(); i++) {
         for(int j = 0; j < board_.size(); j++) {
             tile_.setPosition(i * tileSize_, j * tileSize_);
-            tile_.setFillColor(tile_colors_[(i * board_.size() + j) % 2]);
+            tile_.setFillColor(tile_colors_[(i + j) % 2]);
             stone_.setPosition((i + 0.5f) * tileSize_, (j + 0.5f) * tileSize_);
             window_.draw(tile_);
             if(i == moveSource_.row && j == moveSource_.column)

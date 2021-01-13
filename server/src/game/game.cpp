@@ -52,13 +52,15 @@ bool Game::CheckForAccept() {
         }
     }
     if(!p2_accepted_) {
-        buf = players_[1].client->Receive();
-        if(buf.IsEmpty()) {
-            status_ = GameStatus::GAME_FORCEFULLY_ENDED;
-            InvalidateBothPlayers();
-            return false;
+        if(players_[1].client->CanReceive()){
+            buf = players_[1].client->Receive();
+            if(buf.IsEmpty()) {
+                status_ = GameStatus::GAME_FORCEFULLY_ENDED;
+                InvalidateBothPlayers();
+                return false;
+            }
+            p2_accepted_ = Message(buf).type == Type::kGameStartedAccepted;
         }
-        p2_accepted_ = Message(buf).type == Type::kGameStartedAccepted;
     }
     if(p1_accepted_ && p2_accepted_){
         spdlog::info("Both players accepted\n");
@@ -99,6 +101,7 @@ Game::GamePlayer Game::SwitchPlayer() {
 }
 
 void Game::Update() {
+    spdlog::info("Game::Update()");
     if(status_ == GameStatus::GAME_FORCEFULLY_ENDED)
         return;
     if(!(p1_accepted_ && p2_accepted_)) {

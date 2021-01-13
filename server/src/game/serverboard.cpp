@@ -2,6 +2,7 @@
 
 #include "spdlog/spdlog.h"
 #include <iostream>
+#include <queue>
 
 ServerBoard::ServerBoard(int s) :
     kSize(s) {
@@ -110,4 +111,54 @@ std::string ServerBoard::ToString() const {
 
 std::vector<std::vector<Color>> ServerBoard::GetRawBoard() const {
     return board_;
+}
+
+void ServerBoard::FillConnected(std::vector<std::vector<bool>> & visited, int r, int c, Color color) const {
+    std::queue<std::pair<int, int>> q;
+    q.emplace(r, c);
+    visited[r][c] = true;
+    while (!q.empty())
+    {
+        auto [cr, cc] = q.front();
+        q.pop();
+        for(int dr = -1; dr <= 1; dr++){
+            for(int dc = -1; dc <= 1; dc++) {
+                if(dr == 0 && dc == 0)
+                    continue;
+                int nr = cr + dr, nc = cc + dc;
+                if(ValidCoords(nr, nc) && !visited[nr][nc] && board_[nr][nc] == color){
+                    visited[nr][nc] = true;
+                    q.emplace(nr, nc);
+                }
+            }
+        }
+    }
+}
+
+
+int ServerBoard::GetNumberOfConnectedRegions(Color c) const {
+    std::vector<std::vector<bool>> visited(board_.size());
+    for(auto & v : visited){
+        v.resize(board_.size(), false);
+    }
+    int nRegions = 0;
+    for(int i = 0; i < board_.size(); i++) {
+        for(int j = 0; j < board_.size(); j++) {
+            if(board_[i][j] == c && !visited[i][j]){
+                nRegions++;
+                FillConnected(visited, i, j, c);
+            }
+        }
+    }
+    return nRegions;
+}
+
+Color ServerBoard::GetWinner() const {
+    int nRegP1 = GetNumberOfConnectedRegions(Color::kBlack);
+    int nRegP2 = GetNumberOfConnectedRegions(Color::kWhite);
+    if(nRegP1 == 1)
+        return Color::kBlack;
+    if(nRegP2 == 1)
+        return Color::kWhite;
+    return Color::kEmpty;
 }

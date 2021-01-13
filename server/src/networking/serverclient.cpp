@@ -27,18 +27,20 @@ void ServerClient::SetCanSend(bool v) {
 
 
 void ServerClient::Send(const ByteBuffer & buffer) {
-    spdlog::info("Sending {} bytes", buffer.GetSize() );
     spdlog::info("Sending buffer {}", buffer.ToString());
     write(fd_, buffer.GetBuffer(), buffer.GetSize());
+    spdlog::info("Buffer sent");
 }
 
 
 ByteBuffer ServerClient::Receive() {
     char buffer[1024];
+    spdlog::info("Reading bytes when can_receive={}", can_receive_);
     int n = read(fd_, buffer, 1024);
     spdlog::info("Got {} bytes", n);
     ByteBuffer buf;
     buf.LoadFrom(buffer, n);
+    can_receive_ = false;
     return buf;
 }
 

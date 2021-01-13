@@ -40,6 +40,7 @@ void Server::SetTimeout(int t) {
 }
 
 void Server::Update() {
+    spdlog::info("Update");
     fd_set rmask_tmp, wmask_tmp;
     socklen_t slt;
     int cfd;
