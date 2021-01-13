@@ -45,7 +45,7 @@ int CountPiecesAlong(const std::vector<std::vector<Color>> & board, int r, int c
     int count = 0;
     for(int i = -1; i <= 1; i += 2) {
         int cr = r, cc = c;
-        while(cr >= 0 && cr < board.size() && cc >= 0 && cc < board.size()) {
+        while(cr >= 0 && cr < (int)board.size() && cc >= 0 && cc < (int)board.size()) {
             if(board[cr][cc] != Color::kEmpty)
                 count++;
             cr += i * dr;
@@ -142,8 +142,8 @@ int ServerBoard::GetNumberOfConnectedRegions(Color c) const {
         v.resize(board_.size(), false);
     }
     int nRegions = 0;
-    for(int i = 0; i < board_.size(); i++) {
-        for(int j = 0; j < board_.size(); j++) {
+    for(int i = 0; i < (int)board_.size(); i++) {
+        for(int j = 0; j < (int)board_.size(); j++) {
             if(board_[i][j] == c && !visited[i][j]){
                 nRegions++;
                 FillConnected(visited, i, j, c);

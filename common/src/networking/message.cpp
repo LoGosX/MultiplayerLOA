@@ -24,10 +24,10 @@ std::pair<int, std::vector<std::vector<Color>>> ReadBoardFromBuffer(ByteBuffer &
 }
 
 void WriteMoveToBuffer(ByteBuffer & buffer, Move move) {
-    buffer.WriteByte(move.GetSource().row);
-    buffer.WriteByte(move.GetSource().column);
-    buffer.WriteByte(move.GetDestination().row);
-    buffer.WriteByte(move.GetDestination().column);
+    buffer.WriteByte((char)move.GetSource().row);
+    buffer.WriteByte((char)move.GetSource().column);
+    buffer.WriteByte((char)move.GetDestination().row);
+    buffer.WriteByte((char)move.GetDestination().column);
 }
 
 std::vector<std::string> SplitString(const std::string& str)
@@ -78,7 +78,7 @@ ByteBuffer Message::ToByteBuffer() const {
     }else {
         spdlog::error("Unknown message type received! {}\n", static_cast<int>(type));
     }
-
+    buffer.PadToBufferSize();
     return buffer;
 }
 
@@ -128,6 +128,10 @@ std::string Message::ToString() const {
             << ")->(" << moveMade.GetDestination().row << ',' << moveMade.GetDestination().column << ')';
     }else if(type == Type::kMoveOK) {
         ss << "kMoveOK";
+    }else if(type == Type::kSearchingForGame) {
+        ss << "kSearchingForGame,opponentIp=" << opponentIP;
+    }else {
+        ss << "type=" << static_cast<int>(type);
     }
     ss << ')';
     return ss.str();

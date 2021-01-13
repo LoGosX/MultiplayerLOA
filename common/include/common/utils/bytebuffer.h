@@ -8,6 +8,8 @@ class ByteBuffer {
     using Byte = char;
 public:
 
+    inline static const int kBufferSize = 256;
+
     ByteBuffer() = default;
     ByteBuffer(const std::string &);
 
@@ -26,6 +28,8 @@ public:
     std::string ReadStringUntil(char terminal);
 
     std::string ToString() const;
+
+    void PadToBufferSize();
 private:
     int tail_ = 0;
     std::vector<Byte> buffer_;

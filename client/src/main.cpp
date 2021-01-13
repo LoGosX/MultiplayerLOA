@@ -1,7 +1,7 @@
 #include <iostream>
 #include "app/app.h"
 
-int main(int argc, char const *argv[]){
+int main(){
     App app;
     app.Run();
 }

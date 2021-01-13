@@ -17,11 +17,11 @@ const ByteBuffer::Byte * ByteBuffer::GetBuffer() const {
 }
 
 int ByteBuffer::GetSize() const {
-    return buffer_.size() - tail_;
+    return static_cast<int>(buffer_.size() - tail_);
 }
 
 bool ByteBuffer::IsEmpty() const {
-    return buffer_.size() == tail_;
+    return static_cast<int>(buffer_.size()) == tail_;
 }
 
 void ByteBuffer::WriteByte(Byte byte) {
@@ -51,16 +51,12 @@ char ByteBuffer::ReadChar() {
 }
 
 std::string ByteBuffer::ReadString(int n_chars) {
-    std::string result;
-    for(int i = 0, size = GetSize(); i < size && (i < n_chars || n_chars == -1); i++) {
-        result += ReadChar();
-    }
-    return result;
+    return ReadStringUntil((char)0);
 }
 
 std::string ByteBuffer::ReadStringUntil(char terminal) {
     std::string result;
-    for(int i = 0; i < GetSize(); i++) {
+    while(!IsEmpty()) {
         auto chr = ReadChar();
         if(chr == terminal){
             break;
@@ -76,4 +72,10 @@ std::string ByteBuffer::ToString() const {
         result += std::to_string(buffer_[tail_ + i]) + ' ';
     }
     return result;
+}
+
+void ByteBuffer::PadToBufferSize() {
+    while(GetSize() < ByteBuffer::kBufferSize) {
+        WriteByte(0);
+    }
 }

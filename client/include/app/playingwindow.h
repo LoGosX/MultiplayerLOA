@@ -24,6 +24,7 @@ private:
     void DoMove();
     bool ValidMove(int r, int c);
     void AddToShaded(int r, int c);
+    void DisplayMessage(std::string);
     std::vector<std::vector<Color>> board_;
     std::vector<Move> moves_;
     std::vector<Point> shaded_;

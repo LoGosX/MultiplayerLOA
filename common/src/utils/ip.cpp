@@ -9,7 +9,7 @@ bool isNumber(const std::string& str)
  
 std::vector<std::string> split(const std::string& str, char delim)
 {
-    auto i = 0;
+    size_t i = 0;
     std::vector<std::string> list;
     auto pos = str.find(delim);
     while (pos != std::string::npos)

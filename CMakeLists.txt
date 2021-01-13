@@ -28,5 +28,10 @@ endif()
 unset(BuildClient CACHE)
 unset(BuildServer CACHE)
 
-# lots of warnings and all warnings as errors
-add_compile_options(-Wall -Wextra -pedantic -Werror)
+if (MSVC)
+    target_compile_options( ${PROJECT_NAME} PRIVATE /W4 )
+    target_compile_options( common PRIVATE /W4 )
+else()
+    target_compile_options( ${PROJECT_NAME} PRIVATE -Wall )
+    target_compile_options( common PRIVATE -Wall )
+endif()

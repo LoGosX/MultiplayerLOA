@@ -15,7 +15,6 @@
 #include <unistd.h> //sleep
 
 void Server::Prepare() {
-    socklen_t slt;
     int on = 1;
     sockaddr_in saddr;
     saddr.sin_family = AF_INET;
@@ -40,7 +39,6 @@ void Server::SetTimeout(int t) {
 }
 
 void Server::Update() {
-    spdlog::info("Update");
     fd_set rmask_tmp, wmask_tmp;
     socklen_t slt;
     int cfd;
@@ -105,20 +103,20 @@ void Server::Update() {
 }
 
 void Server::RemoveInvalidated() {
-    for(int i = infos_.size() - 1; i >= 0; i--) {
+    for(int i = (int)infos_.size() - 1; i >= 0; i--) {
         if(!infos_[i].client->IsValid()){
             spdlog::info("{} invalidated", infos_[i].ip);
             std::swap(infos_[i], infos_.back());
             infos_.pop_back();
         }
     }
-    for(int i = clients_.size() - 1; i >= 0; i--) {
+    for(int i = (int)clients_.size() - 1; i >= 0; i--) {
         if(!clients_[i]->IsValid()){
             std::swap(clients_[i], clients_.back());
             clients_.pop_back();
         }
     }
-    for(int i = games_.size() - 1; i >= 0; i--) {
+    for(int i = (int)games_.size() - 1; i >= 0; i--) {
         if(games_[i]->GetStatus() == Game::GameStatus::GAME_FORCEFULLY_ENDED) {
             std::swap(games_[i], games_.back());
             games_.pop_back();
@@ -139,8 +137,8 @@ void Server::TryToStartGame() {
             inf.opponentIP = m.opponentIP;
         }
     }
-    for(int i = 0; i < infos_.size(); i++) {
-        for(int j = i + 1; j < infos_.size(); j++) {
+    for(int i = 0; i < (int)infos_.size(); i++) {
+        for(int j = i + 1; j < (int)infos_.size(); j++) {
             if(infos_[i].inGame || infos_[j].inGame || infos_[i].opponentIP.empty() || infos_[j].opponentIP.empty())
                 continue;
             if(infos_[i].opponentIP == infos_[j].ip && infos_[i].ip == infos_[j].opponentIP){

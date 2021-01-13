@@ -12,6 +12,7 @@ include_directories("include")
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
+
 target_link_libraries(${PROJECT_NAME}
   common
   sfml-graphics

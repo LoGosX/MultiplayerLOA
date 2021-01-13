@@ -52,9 +52,25 @@ void PlayingWindow::SetupBoard() {
     shade_.setOrigin({shade_.getRadius(), shade_.getRadius()});
 }
 
+void PlayingWindow::DisplayMessage(std::string m){
+    sf::Text text;
+    const auto size = window_.getSize();
+    text.setFont(kFont);
+    text.setString(m);
+    text.setCharacterSize(58);
+    text.setFillColor(sf::Color::Red);
+    sf::FloatRect textRect = text.getLocalBounds();
+    text.setOrigin(textRect.left + textRect.width/2.0f,
+                textRect.top  + textRect.height/2.0f);
+    text.setPosition(sf::Vector2f(size.x/2.0f,size.y/2.0f));
+    window_.draw(text);
+}
+
 void PlayingWindow::DrawBoard() {
-    if(board_.empty())
+    if(board_.empty()){
+        DisplayMessage("Waiting for server...");
         return;
+    }
     for(int i = 0; i < board_.size(); i++) {
         for(int j = 0; j < board_.size(); j++) {
             tile_.setPosition(i * tileSize_, j * tileSize_);

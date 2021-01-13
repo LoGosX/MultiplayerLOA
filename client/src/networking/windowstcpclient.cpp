@@ -42,7 +42,6 @@ void WindowsTCPClient::InitializeWinsock() {
 }
 
 void WindowsTCPClient::Connect() {
-    WSADATA wsaData;
     connect_socket_ = INVALID_SOCKET;
     struct addrinfo *result = NULL,
                     *ptr = NULL,
@@ -95,11 +94,16 @@ void WindowsTCPClient::Connect() {
 
 void WindowsTCPClient::Send(const ByteBuffer & buffer) {
     // Send an initial buffer
-    int iResult = send( this->connect_socket_, (char *)buffer.GetBuffer(), buffer.GetSize(), 0 );
-    if (iResult == SOCKET_ERROR) {
-        spdlog::error("send failed with error: {}\n", WSAGetLastError());
+    int bytesSent = 0;
+    while(bytesSent < ByteBuffer::kBufferSize){
+        int iResult = send( this->connect_socket_, (char *)buffer.GetBuffer(), buffer.GetSize(), 0 );
+        if (iResult == SOCKET_ERROR) {
+            spdlog::error("send failed with error: {}\n", WSAGetLastError());
+            return;
+        }
+        bytesSent += iResult;
     }
-    spdlog::info("Bytes Sent: {}\n", iResult);
+    spdlog::info("Bytes Sent: {}\n", bytesSent);
 }
 
 ByteBuffer WindowsTCPClient::Receive() {
@@ -126,19 +130,25 @@ void WindowsTCPClient::WaitForIncomingMessage() {
     while(thread_should_run_){
         if(!IsConnected())
             continue;
-        int iResult = recv(this->connect_socket_, buf, 1024, 0);
-        can_receive_ = false;
-        if ( iResult > 0 ){
-            last_received_buffer_.LoadFrom(buf, iResult);
-            can_receive_ = true;
+        int bytesReceived = 0;
+        while(bytesReceived < ByteBuffer::kBufferSize) {
+            int iResult = recv(this->connect_socket_, buf, 1024, 0);
+            if ( iResult > 0 ){
+                bytesReceived += iResult;
+            }
+            else if ( iResult == 0 ){
+                spdlog::error("Connection closed in receive\n");
+                thread_should_run_ = false;
+                can_receive_ = false;
+                connected_ = false;
+                return;
+            }
+            else{
+                spdlog::error("recv failed with error: {}\n", WSAGetLastError());
+                return;
+            }
         }
-        else if ( iResult == 0 ){
-            spdlog::error("Connection closed in receive\n");
-            return;
-        }
-        else{
-            spdlog::error("recv failed with error: {}\n", WSAGetLastError());
-            return;
-        }
+        last_received_buffer_.LoadFrom(buf, bytesReceived);
+        can_receive_ = true;
     }
 }

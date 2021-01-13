@@ -62,7 +62,7 @@ void WindowArea::OnKeyPress(sf::Keyboard::Key k) {
         PopCharacter();
     }else {
         if(k >= sf::Keyboard::A && k <= sf::Keyboard::Num9){
-            char c = k;
+            char c = (char)k;
             if(k <= sf::Keyboard::Z){
                 if(sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)){
                 c += 'A';
