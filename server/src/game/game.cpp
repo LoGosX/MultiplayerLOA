@@ -150,8 +150,14 @@ void Game::Update() {
 }
 
 void Game::InvalidateBothPlayers() {
+    Message m;
+    m.type = Type::kGameEnded;
+    m.gameResult = Color::kEmpty;
+    players_[0].client->Send(m.ToByteBuffer());
+    players_[1].client->Send(m.ToByteBuffer());
     players_[0].client->Invalidate();
     players_[1].client->Invalidate();
+    
 }
 
 Game::GameStatus Game::GetStatus() const {

@@ -18,6 +18,7 @@ public:
 
     bool IsValid() const;
     void Invalidate();
+
 private:
     bool valid_ = true;
     int fd_;

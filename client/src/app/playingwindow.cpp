@@ -81,6 +81,8 @@ void PlayingWindow::DrawBoard() {
     if(board_.empty() || ended_){
         if(board_.empty())
             DisplayMessage("Waiting for server...");
+        else if(result_ == Color::kEmpty)
+            DisplayMessage("Opponent left.");
         else if(DidWon())
             DisplayMessage("You won!");
         else

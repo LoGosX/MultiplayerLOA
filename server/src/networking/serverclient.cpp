@@ -39,6 +39,8 @@ ByteBuffer ServerClient::Receive() {
     int bytesReceived = 0;
     while(bytesReceived < ByteBuffer::kBufferSize) {
         int n = read(fd_, buffer, 1024);
+        if(n == 0)
+            break;
         bytesReceived += n;
     }
     ByteBuffer buf;
